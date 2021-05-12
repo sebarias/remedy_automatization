@@ -25,9 +25,6 @@ def get_date_end():
 #set Global Variables
 #delay = 4
 
-#USER = 'BCH_scarias'
-#PASS = 'Banco05.'
-
 #REMEDY_URL = 'https://sdserti.entel.cl/arsys/shared/login.jsp?/arsys'
 
 #xpath
@@ -42,18 +39,6 @@ id_rfc_txtare = 'arid_WIN_3_1000000182'
 
 tomorrow = date.today() + timedelta(days=1)
 tomorrow = tomorrow.strftime('%d/%m/%y %H:%M:%S')
-
-dic_basic = {}
-#coordinador de cambio
-dic_basic['WIN_3_1000003230'] = {'xp':1, 'div':False}
-#servicio
-dic_basic['WIN_3_303497300'] = {'xp':86, 'div':False, 'service':True}
-#motivo
-dic_basic['WIN_3_1000000294'] = {'xp':3, 'div':True}
-#impacto
-dic_basic['WIN_3_1000000163'] = {'xp':4, 'div':True}
-#urgencia
-dic_basic['WIN_3_1000000162'] = {'xp':4, 'div':True}
 
 resumen_txt = 'cambio rfc'
 notas_txt = 'cambio_rfc_notas'
@@ -75,21 +60,6 @@ dic_tab = {}
 dic_tab['categorizacion'] = 2
 dic_tab['fecha_sistema'] = 5
 dic_tab['detalle'] = 1
-
-dic_categ = {}
-
-dic_categ['WIN_3_1000000063'] = {'xp':15,'div':False}
-dic_categ['WIN_3_1000000064'] = {'xp':6,'div':False}
-dic_categ['WIN_3_1000000065'] = {'xp':2,'div':False}
-dic_categ['WIN_3_1000001270'] = {'xp':12,'div':False}
-dic_categ['WIN_3_1000001271'] = {'xp':3,'div':False}
-dic_categ['WIN_3_1000001272'] = {'xp':1,'div':False}
-dic_categ['WIN_3_1000002268'] = {'xp':2,'div':False}
-
-dic_riesgo = {}
-dic_riesgo['WIN_0_300996200'] = {'xp':2,'div':False}
-dic_riesgo['WIN_0_301019100'] = {'xp':1,'div':False}
-dic_riesgo['WIN_0_301029000'] = {'xp':2,'div':False}
 
 class RFC():
     def __init__(self, hide = False):
