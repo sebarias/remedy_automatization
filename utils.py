@@ -23,9 +23,6 @@ def get_date_end():
     return get_date_add(2)
 
 #set Global Variables
-#delay = 4
-
-#REMEDY_URL = 'https://sdserti.entel.cl/arsys/shared/login.jsp?/arsys'
 
 #xpath
 xp_menu_fix = '//*[@id="WIN_0_304327070"]'
@@ -126,11 +123,13 @@ class RFC():
         self.choose_op(self.data_basic)
         #set txt
         self.complete_txt(dic_txt)
+        #seleccionar y completar tab de fechas
         self.sel_fecha_sistema()
         self.complete_txt(dic_date)
+        #seleccionar y completar tab de categorizacion
         self.sel_categorizacion()
-        #self.choose_op(dic_categ)
         self.choose_op(self.data_categ)
+        #seleccionar y completar popup de riesgos.
         self.set_riesgo_values()
         
     def get_last_menu_outer_div(self):
