@@ -1,8 +1,8 @@
 {
     "id":"",
-    "user":"XXXX",
-    "pass":"XXXX.",
-    "remedy_url":"https://sdserti.entel.cl/arsys/shared/login.jsp?/arsys",
+    "user":"XXX",
+    "pass":"XXX",
+    "remedy_url":"XXXX",
     "delay":2,
     "notas":"notas",
     "resumen":"resumen",

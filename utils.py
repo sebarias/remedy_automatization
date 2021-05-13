@@ -5,6 +5,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from datetime import date, timedelta
 import time
@@ -27,7 +28,10 @@ def get_date_end():
 #xpath
 xp_menu_fix = '//*[@id="WIN_0_304327070"]'
 xp_menu_gdc = '//*[@id="WIN_0_80077"]/fieldset/div/div/div/div[10]/a'
+#cambiar para headless mode.
+#xp_menu_gdc = '//*[@id="WIN_0_80077"]/fieldset/div/div/div/div[6]/a'
 xp_menu_gdc_nchange = '//*[@id="WIN_0_80077"]/fieldset/div/div/div/div[10]/div/div[2]/a'
+#xp_menu_gdc_nchange = '//*[@id="WIN_0_80077"]/fieldset/div/div/div/div[6]/div/div[2]/a'
 
 #IDs
 id_appmenu = 'WIN_0_304316340'
@@ -94,7 +98,7 @@ class RFC():
             #app_menu = driver.find_element_by_id('WIN_0_80098')
 
             myElem = WebDriverWait(self.driver, self.delay).until(EC.presence_of_element_located((By.ID, 'WIN_0_80077')))
-            #print('myelem: ', myElem.text)
+            print('myelem: ', myElem.text)
 
             #print("Page is ready!")
 
@@ -110,27 +114,32 @@ class RFC():
 
         ActionChains(self.driver).move_to_element(gdc_op).click(change).perform()
 
-        print('rfc created')
+        print('rfc created: ', self.driver.title)
 
     def set_rfc_id(self):
+        print(self.driver.title)
         self.rfc_id = self.driver.find_element_by_id('arid_WIN_3_1000000182').get_attribute('value')
         print(self.rfc_id)
         
       
     def setting_data_mobile(self):
-        self.set_grupo_coordinador_2()
-        #set opciones data 
-        self.choose_op(self.data_basic)
-        #set txt
-        self.complete_txt(dic_txt)
-        #seleccionar y completar tab de fechas
-        self.sel_fecha_sistema()
-        self.complete_txt(dic_date)
-        #seleccionar y completar tab de categorizacion
-        self.sel_categorizacion()
-        self.choose_op(self.data_categ)
-        #seleccionar y completar popup de riesgos.
-        self.set_riesgo_values()
+        try:
+            self.set_grupo_coordinador()
+            #set opciones data 
+            self.choose_op(self.data_basic)
+            #set txt
+            self.complete_txt(dic_txt)
+            #seleccionar y completar tab de fechas
+            self.sel_fecha_sistema()
+            self.complete_txt(dic_date)
+            #seleccionar y completar tab de categorizacion
+            self.sel_categorizacion()
+            self.choose_op(self.data_categ)
+            #seleccionar y completar popup de riesgos.
+            self.set_riesgo_values()
+        except:
+            print('error: cerraremos pagina')
+            self.driver.close()
         
     def get_last_menu_outer_div(self):
         div = self.driver.find_elements_by_class_name('MenuOuter')[-1]
@@ -140,7 +149,7 @@ class RFC():
         print(len(self.driver.find_elements_by_class_name('MenuOuter')))
         return len(self.driver.find_elements_by_class_name('MenuOuter'))
 
-    def set_grupo_coordinador_2(self):
+    def set_grupo_coordinador(self):
         self.driver.find_element_by_id("WIN_3_1000003229").find_element_by_tag_name('a').click()
         time.sleep(self.delay)
         div_id = self.get_count_last_menu() + 2
@@ -177,11 +186,13 @@ class RFC():
                 is_service = False
 
             print(element_id, " ", op_name)
-           
-            self.driver.find_element_by_id(element_id).find_element_by_tag_name('a').click()
-            time.sleep(1)
+            op = self.driver.find_element_by_id(element_id)
+            op = op.find_element_by_tag_name('a')
+            op = op.click()
+            time.sleep(self.delay)
             if is_service:
                 self.scroll_down(60)
+            #print(len(self.driver.find_elements_by_class_name('MenuOuter')))
             div = self.driver.find_elements_by_class_name('MenuOuter')[-1]
             div = div.\
                 find_elements_by_class_name('MenuTableRow')[op_id-1].\
@@ -216,6 +227,8 @@ class RFC():
         assert len(self.driver.window_handles) == 1
         self.driver.\
             find_element_by_id('WIN_3_301346600').click()
+        time.sleep(self.delay)
+        print(len(self.driver.window_handles))
         window_after = self.driver.window_handles[1]
         self.driver.switch_to.window(window_after)
         self.choose_op(self.data_riesgo)
@@ -273,7 +286,7 @@ def valida_load_page(driver, delay):
 
     try:
         myElem = WebDriverWait(driver, delay).until(EC.presence_of_element_located((By.ID, 'controlBox')))
-        print("Page is ready!")
+        print("Page is ready! : ", driver.title)
         return True
     except TimeoutException:
         print("Loading took too much time!")
@@ -283,12 +296,17 @@ def valida_load_page(driver, delay):
 
 def login_remedy(hide=False,user='',password='',remedy_url='',delay=0):
     #set the nav
+    chrome_options = set_chrome_options()
     op=None
     if hide:
         op = webdriver.ChromeOptions()
         op.add_argument('headless')
-        
-    driver = webdriver.Chrome('/usr/local/bin/chromedriver', options=op)  
+    driver = webdriver.Chrome('/usr/local/bin/chromedriver', options=op)
+    driver.set_window_size(800, 600)
+    
+    #driver = webdriver.Chrome('/usr/local/bin/chromedriver', options=op)  
+    #firefox_options = webdriver.FirefoxOptions()
+    
     driver.get(remedy_url)
 
     #valida que se haya cargado la página.
@@ -303,7 +321,7 @@ def login_remedy(hide=False,user='',password='',remedy_url='',delay=0):
     user = driver.find_element_by_id('username-id').send_keys(user)
     password = driver.find_element_by_id('pwd-id').send_keys(password)
     #elem = driver.find_element_by_xpath(xp_login_submit)
-    driver.find_element_by_xpath(".//input[@value='Iniciar sesión' and @type='button']").click()
+    driver.find_element_by_xpath(".//input[@name='login' and @type='button']").click()
     #wait = WebDriverWait(driver, 10)
     #wait.until(EC.element_to_be_clickable((By.XPATH, ".//input[@value='Submit' and @type='submit']"))).click()
     #elem.click()
@@ -329,3 +347,16 @@ def load_data():
     with open('config.json', 'r') as j:
         data = json.load(j)
         return data
+
+def set_chrome_options() -> None:
+    """Sets chrome options for Selenium.
+    Chrome options for headless browser is enabled.
+    """
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_prefs = {}
+    chrome_options.experimental_options["prefs"] = chrome_prefs
+    chrome_prefs["profile.default_content_settings"] = {"images": 2}
+    return chrome_options
