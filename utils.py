@@ -4,7 +4,7 @@ import time
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoAlertPresentException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from datetime import date, timedelta
@@ -29,9 +29,9 @@ def get_date_end():
 xp_menu_fix = '//*[@id="WIN_0_304327070"]'
 xp_menu_gdc = '//*[@id="WIN_0_80077"]/fieldset/div/div/div/div[10]/a'
 #cambiar para headless mode.
-#xp_menu_gdc = '//*[@id="WIN_0_80077"]/fieldset/div/div/div/div[6]/a'
+xp_menu_gdc_hm = '//*[@id="WIN_0_80077"]/fieldset/div/div/div/div[6]/a'
 xp_menu_gdc_nchange = '//*[@id="WIN_0_80077"]/fieldset/div/div/div/div[10]/div/div[2]/a'
-#xp_menu_gdc_nchange = '//*[@id="WIN_0_80077"]/fieldset/div/div/div/div[6]/div/div[2]/a'
+xp_menu_gdc_nchange_hm = '//*[@id="WIN_0_80077"]/fieldset/div/div/div/div[6]/div/div[2]/a'
 
 #IDs
 id_appmenu = 'WIN_0_304316340'
@@ -90,7 +90,8 @@ class RFC():
             app_menu = self.driver.find_element_by_id('WIN_0_304316340').click()
             #Si cuando abro el menu de aplicaciones, este viene vacío
             #shunk sigueinte
-            #debo ejcutar este codigo. nose porque pero hace q funcione.
+            #esta acción se ejecuta para llevar el foco al menu
+            #en caso de que se pierda en otro objeto de la pagina.
 
             app_menu = self.driver.find_element_by_xpath(xp_menu_fix)
 
@@ -103,18 +104,27 @@ class RFC():
             #print("Page is ready!")
 
         except TimeoutException:
-            print("Error")
-
+            print("Error al cargar la lista de opciones")
+        
+        if self.is_headlessmode():
+            print('headlessmode detected')
+            gestion_cambio_op = xp_menu_gdc_hm
+            nuevo_cambio_op = xp_menu_gdc_nchange_hm
+        else:
+            gestion_cambio_op = xp_menu_gdc
+            nuevo_cambio_op = xp_menu_gdc_nchange
 
         WebDriverWait(self.driver, self.delay)
         #seleccionar un nuevo cambio
-        gdc_op = self.driver.find_element_by_xpath(xp_menu_gdc)
-
-        change = self.driver.find_element_by_xpath(xp_menu_gdc_nchange)
+        gdc_op = self.driver.find_element_by_xpath(gestion_cambio_op)
+        change = self.driver.find_element_by_xpath(nuevo_cambio_op)
 
         ActionChains(self.driver).move_to_element(gdc_op).click(change).perform()
-
+        valida_alert(self.driver,self.delay,'sesión al crear rfc')
         print('rfc created: ', self.driver.title)
+
+    def is_headlessmode(self):
+        return self.driver.execute_script("return navigator.plugins.length == 0")
 
     def set_rfc_id(self):
         print(self.driver.title)
@@ -126,20 +136,27 @@ class RFC():
         try:
             self.set_grupo_coordinador()
             #set opciones data 
+            print('grupo coordinador elegido')
             self.choose_op(self.data_basic)
+            print('opciones básicas elegidas')
             #set txt
             self.complete_txt(dic_txt)
+            print('data descriptiva de RFC ingresada')
             #seleccionar y completar tab de fechas
             self.sel_fecha_sistema()
             self.complete_txt(dic_date)
+            print('fechas de tab fechas ingresadas')
             #seleccionar y completar tab de categorizacion
             self.sel_categorizacion()
             self.choose_op(self.data_categ)
+            print('data de categorización ingresada')
             #seleccionar y completar popup de riesgos.
-            self.set_riesgo_values()
+            #self.set_riesgo_values()
         except:
-            print('error: cerraremos pagina')
-            self.driver.close()
+            print('error: cerraremos sesión y pagina')
+            self.cerrar_sesion()
+            time.sleep(self.delay)
+            self.close_page()
         
     def get_last_menu_outer_div(self):
         div = self.driver.find_elements_by_class_name('MenuOuter')[-1]
@@ -215,25 +232,63 @@ class RFC():
         self.select_tab(dic_tab['fecha_sistema'])
 
     def save_rfc(self):
+        self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         save_id = 'WIN_3_1001'
         self.driver.find_element_by_id(save_id).click()
+        time.sleep(self.delay * 2)
+        nu_rfc = self.get_rfc_number()
+        if nu_rfc == self.rfc_id:
+            print(nu_rfc, self.rfc_id,' : error al guardar RFC.')
+        else:
+            print(nu_rfc, self.rfc_id, ' :: RFC Guardado OK')
+            
 
     def save_riesgo(self):
         save_id = 'WIN_0_300994900'
         self.driver.find_element_by_id(save_id).click()
 
     def set_riesgo_values(self):
-        original_wind = self.driver.current_window_handle
+        print('here')
+        #self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        original_wind=self.driver.current_window_handle
         assert len(self.driver.window_handles) == 1
-        self.driver.\
-            find_element_by_id('WIN_3_301346600').click()
+        #WIN_3_303900300
+        #reg_img_301346600
+        #WIN_3_301346600
+        btn = self.driver.\
+           find_element_by_id('WIN_3_301346600')
+        print(btn.get_attribute('value'))
+        print(btn.get_attribute('outerHTML'))
+        #btn.send_keys(Keys.CONTROL + 't')
+        btn.click()
+        #self.driver.execute_script("document.getElementById('WIN_3_301346600').click()")
         time.sleep(self.delay)
-        print(len(self.driver.window_handles))
-        window_after = self.driver.window_handles[1]
-        self.driver.switch_to.window(window_after)
-        self.choose_op(self.data_riesgo)
-        self.save_riesgo()
-        self.driver.switch_to.window(original_wind)
+        
+        all_handles=self.driver.window_handles
+        print(len(all_handles))
+        print(all_handles)
+        for handle in all_handles:
+            if handle !=original_wind:
+                print(handle)
+                window_after = self.driver.switch_to.window(handle)
+                print(window_after.title)
+                self.driver.switch_to.window(window_after)
+                self.choose_op(self.data_riesgo)
+                self.save_riesgo()
+                self.driver.switch_to.window(original_wind)
+                
+
+        # original_wind = self.driver.current_window_handle
+        # assert len(self.driver.window_handles) == 1
+        # self.driver.\
+        #     find_element_by_id('WIN_3_301346600').click()
+        # time.sleep(self.delay)
+        # print(len(self.driver.window_handles))
+        # window_after = self.driver.window_handles[1]
+        # self.driver.switch_to.window(window_after)
+        # self.choose_op(self.data_riesgo)
+        # self.save_riesgo()
+        # self.driver.switch_to.window(original_wind)
 
     def print_error_txt(self):
         pr = self.driver.find_element_by_class_name('prompttext')
@@ -241,32 +296,53 @@ class RFC():
 
     def cerrar_sesion(self):
         self.driver.find_element_by_id('WIN_0_300000044').click()
+        self.aceptar_save_session_alert()
         print('cierre sesión ok: page title >', self.driver.title)
+        
 
     def close_page(self):
         self.driver.close()
+
+    def aceptar_save_session_alert(self):
+        """Se valida si aparece el alert que indica guardar antes de cerrar sesion"""
+        iframe = self.driver.find_elements_by_tag_name('iframe')
+        if len(iframe) > 1:
+            print('se detecta alert')
+            self.driver.switch_to.frame(iframe[1])
+            #presionar aceptar
+            self.driver.\
+                find_element_by_id('PopupMsgFooter').\
+                find_elements_by_class_name('PopupBtn')[0].click()
+            #switch al contentedor
+            self.driver.switch_to.default_content()
+            time.sleep(self.delay)
+        else:
+            print('no se encontró alert.')
+
+    def get_rfc_number(self):
+        rfc = self.driver.find_element_by_id('arid_WIN_3_1000000182').get_attribute('value')
+        return(rfc)
         
     
 
 
 
-
-def valida_alert(driver, delay):
+def valida_alert(driver, delay, message = 'default'):
     alert_ap = True
     #verifica si aparece un alert con la sesión tomada y si aparece más de una vez
     while alert_ap:
         try:
             WebDriverWait(driver, delay).until(EC.alert_is_present(),
-                                           'El usuario está conectado actualmente desde otro equipo')
-
+                                           message)
             alert = driver.switch_to.alert
             alert.accept()
             print("alert accepted")
 
-        except TimeoutException:
-            print("no se encontró alert error")
+        except (NoAlertPresentException, TimeoutException) as py_ex:
+            print("Alert not present")
+            print (py_ex)
+            print (py_ex.args)
             alert_ap = False
-            
     return True
 
 
@@ -296,19 +372,12 @@ def valida_load_page(driver, delay):
 
 def login_remedy(hide=False,user='',password='',remedy_url='',delay=0):
     #set the nav
-    chrome_options = set_chrome_options()
+    chrome_options = set_chrome_options(hide)
     op=None
-    if hide:
-        op = webdriver.ChromeOptions()
-        op.add_argument('headless')
-    driver = webdriver.Chrome('/usr/local/bin/chromedriver', options=op)
-    driver.set_window_size(800, 600)
-    
-    #driver = webdriver.Chrome('/usr/local/bin/chromedriver', options=op)  
-    #firefox_options = webdriver.FirefoxOptions()
-    
+    driver = webdriver.Chrome('/usr/local/bin/chromedriver', options=chrome_options)
+    driver.set_window_size(1920, 1080)
+    #driver.manage().window().maximize()
     driver.get(remedy_url)
-
     #valida que se haya cargado la página.
     #TODO: agregar flujo de error.
 
@@ -322,16 +391,12 @@ def login_remedy(hide=False,user='',password='',remedy_url='',delay=0):
     password = driver.find_element_by_id('pwd-id').send_keys(password)
     #elem = driver.find_element_by_xpath(xp_login_submit)
     driver.find_element_by_xpath(".//input[@name='login' and @type='button']").click()
-    #wait = WebDriverWait(driver, 10)
-    #wait.until(EC.element_to_be_clickable((By.XPATH, ".//input[@value='Submit' and @type='submit']"))).click()
-    #elem.click()
 
 
     #verifica si aparece un alert con la sesión tomada y si aparece más de una vez
-    if valida_alert(driver, delay) == False:
+    if valida_alert(driver, delay, 'otra sesión') == False:
         return False
-        
-
+    
     print('continua a validación de promt')
     if valida_prompt(driver, delay) == False:
         return False
@@ -348,14 +413,16 @@ def load_data():
         data = json.load(j)
         return data
 
-def set_chrome_options() -> None:
+def set_chrome_options(hide=False) -> None:
     """Sets chrome options for Selenium.
     Chrome options for headless browser is enabled.
     """
     chrome_options = Options()
-    chrome_options.add_argument("--headless")
+    if hide:
+        chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--start-maximized")
     chrome_prefs = {}
     chrome_options.experimental_options["prefs"] = chrome_prefs
     chrome_prefs["profile.default_content_settings"] = {"images": 2}
