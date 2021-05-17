@@ -4,7 +4,7 @@ import time
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, NoAlertPresentException
+from selenium.common.exceptions import TimeoutException, NoAlertPresentException, NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from datetime import date, timedelta
@@ -14,7 +14,10 @@ import json
 
 def get_date_add(dias):
     fecha = date.today() + timedelta(days=dias)
-    fecha = fecha.strftime('%d/%m/%y %H:%M:%S')
+    #fecha = fecha.strftime('%d/%m/%y %H:%M:%S')
+    #formato gringo
+    fecha = fecha.strftime('%m/%d/%Y %H:%M:%S')
+    print(fecha)
     return fecha
 
 def get_date_start():
@@ -76,6 +79,7 @@ class RFC():
         self.data_basic = data['basic']
         self.data_categ = data['categorizacion']
         self.data_riesgo = data['riesgo']
+        self.language = None
         print(type(self.data_basic))
 
 
@@ -106,13 +110,15 @@ class RFC():
         except TimeoutException:
             print("Error al cargar la lista de opciones")
         
-        if self.is_headlessmode():
-            print('headlessmode detected')
-            gestion_cambio_op = xp_menu_gdc_hm
-            nuevo_cambio_op = xp_menu_gdc_nchange_hm
-        else:
-            gestion_cambio_op = xp_menu_gdc
-            nuevo_cambio_op = xp_menu_gdc_nchange
+        gestion_cambio_op = xp_menu_gdc_hm
+        nuevo_cambio_op = xp_menu_gdc_nchange_hm
+        # if self.is_headlessmode():
+        #     print('headlessmode detected')
+        #     gestion_cambio_op = xp_menu_gdc_hm
+        #     nuevo_cambio_op = xp_menu_gdc_nchange_hm
+        # else:
+        #     gestion_cambio_op = xp_menu_gdc
+        #     nuevo_cambio_op = xp_menu_gdc_nchange
 
         WebDriverWait(self.driver, self.delay)
         #seleccionar un nuevo cambio
@@ -128,9 +134,25 @@ class RFC():
 
     def set_rfc_id(self):
         print(self.driver.title)
+        
         self.rfc_id = self.driver.find_element_by_id('arid_WIN_3_1000000182').get_attribute('value')
         print(self.rfc_id)
         
+    def calendar_action(self):
+        btn = self.driver.find_element_by_id('WIN_3_303924000')
+        btn = btn.find_element_by_tag_name('a')
+        btn.click()
+        time.sleep(self.delay)
+        cal = self.driver.find_element_by_id('popup303924000_3')
+        days = cal.find_elements_by_class_name('weekday')
+        print('days:', len(days))
+        days[15].click()
+        time.sleep(self.delay)
+        self.driver.find_elements_by_tag_name('button')[0].click()
+        time.sleep(self.delay)
+        cal_txt = self.driver.find_element_by_id('arid_WIN_3_303924000').get_attribute('value')
+        print(cal_txt)
+
       
     def setting_data_mobile(self):
         try:
@@ -232,10 +254,26 @@ class RFC():
         self.select_tab(dic_tab['fecha_sistema'])
 
     def save_rfc(self):
-        self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        save_id = 'WIN_3_1001'
-        self.driver.find_element_by_id(save_id).click()
-        time.sleep(self.delay * 2)
+        #self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        #save_id = 'WIN_3_1001' submit
+        #WIN_3_1002 query
+        #div class btntextdiv
+        save_id = 'WIN_3_1001' #modify
+        # btn_ = self.driver.find_element_by_id('WIN_4_304255220')
+        # btn_.send_keys(Keys.TAB)
+        # time.sleep(self.delay)
+        # btn_.send_keys(Keys.TAB)
+        # time.sleep(self.delay)
+        # btn_.send_keys(Keys.TAB)
+        btn_ = self.driver.find_element_by_id(save_id)
+        
+        print(btn_.get_attribute('outerHTML'))
+        btn_.click()
+        #btn_.send_keys(Keys.RETURN)
+        
+        time.sleep(self.delay * 3)
+        self.print_error_txt()
+
         nu_rfc = self.get_rfc_number()
         if nu_rfc == self.rfc_id:
             print(nu_rfc, self.rfc_id,' : error al guardar RFC.')
@@ -291,8 +329,14 @@ class RFC():
         # self.driver.switch_to.window(original_wind)
 
     def print_error_txt(self):
-        pr = self.driver.find_element_by_class_name('prompttext')
-        pr.text
+        div_err = self.driver.find_element_by_id('PromptBar')
+        print(div_err.get_attribute('outerHTML'))
+        try:
+            pr = self.driver.find_element_by_class_name('prompttext')
+            print(pr.text)
+        except (NoSuchElementException) as py_ex:
+            print (py_ex)
+            print (py_ex.args)
 
     def cerrar_sesion(self):
         self.driver.find_element_by_id('WIN_0_300000044').click()
@@ -322,10 +366,6 @@ class RFC():
     def get_rfc_number(self):
         rfc = self.driver.find_element_by_id('arid_WIN_3_1000000182').get_attribute('value')
         return(rfc)
-        
-    
-
-
 
 def valida_alert(driver, delay, message = 'default'):
     alert_ap = True
@@ -372,10 +412,15 @@ def valida_load_page(driver, delay):
 
 def login_remedy(hide=False,user='',password='',remedy_url='',delay=0):
     #set the nav
+    
     chrome_options = set_chrome_options(hide)
     op=None
-    driver = webdriver.Chrome('/usr/local/bin/chromedriver', options=chrome_options)
-    driver.set_window_size(1920, 1080)
+    #driver = webdriver.Chrome('/usr/local/bin/chromedriver', options=chrome_options)
+    driver = webdriver.Remote("http://127.0.0.1:4444/wd/hub", options=chrome_options)
+    language = driver.execute_script("return window.navigator.userLanguage || window.navigator.language")
+    
+    print('lang:', language)
+    #driver.set_window_size(1920, 1080)
     #driver.manage().window().maximize()
     driver.get(remedy_url)
     #valida que se haya cargado la página.
