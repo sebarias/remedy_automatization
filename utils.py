@@ -12,21 +12,10 @@ import time
 import json
 
 
-def get_date_add(dias):
-    fecha = date.today() + timedelta(days=dias)
-    #fecha = fecha.strftime('%d/%m/%y %H:%M:%S')
-    #formato gringo
-    fecha = fecha.strftime('%m/%d/%Y %H:%M:%S')
-    print(fecha)
-    return fecha
 
-def get_date_start():
-    return get_date_add(1)
-
-def get_date_end():
-    return get_date_add(2)
 
 #set Global Variables
+lang_en = 'en-US'
 
 #xpath
 xp_menu_fix = '//*[@id="WIN_0_304327070"]'
@@ -41,8 +30,6 @@ id_appmenu = 'WIN_0_304316340'
 id_appmenu_op_to_validate = 'WIN_0_80077'
 id_rfc_txtare = 'arid_WIN_3_1000000182'
 
-tomorrow = date.today() + timedelta(days=1)
-tomorrow = tomorrow.strftime('%d/%m/%y %H:%M:%S')
 
 resumen_txt = 'cambio rfc'
 notas_txt = 'cambio_rfc_notas'
@@ -50,15 +37,17 @@ notas_txt = 'cambio_rfc_notas'
 dic_txt = {}
 dic_txt['arid_WIN_3_1000000000'] = resumen_txt
 dic_txt['arid_WIN_3_1000000151'] = notas_txt
-dic_txt['arid_WIN_3_303924000'] = get_date_start()
+dic_txt['arid_WIN_3_303924000'] = None
 
-dic_date = {}
-dic_date['arid_WIN_3_1000000350'] = get_date_start()
-dic_date['arid_WIN_3_1000000362'] = get_date_end()
-dic_date['arid_WIN_3_1000000348'] = get_date_start()
-dic_date['arid_WIN_3_1000000364'] = get_date_end()
-dic_date['arid_WIN_3_1000000349'] = get_date_start()
-dic_date['arid_WIN_3_1000000363'] = get_date_end()
+dic_date_init = {}
+dic_date_init['arid_WIN_3_1000000350'] = None
+dic_date_init['arid_WIN_3_1000000348'] = None
+dic_date_init['arid_WIN_3_1000000349'] = None
+
+dic_date_end = {}
+dic_date_end['arid_WIN_3_1000000362'] = None
+dic_date_end['arid_WIN_3_1000000364'] = None
+dic_date_end['arid_WIN_3_1000000363'] = None
 
 dic_tab = {}
 dic_tab['categorizacion'] = 2
@@ -79,14 +68,8 @@ class RFC():
         self.data_basic = data['basic']
         self.data_categ = data['categorizacion']
         self.data_riesgo = data['riesgo']
-        self.language = None
-        print(type(self.data_basic))
-
-
-        self.driver = login_remedy(hide,self.user,self.password,self.remedy_url,self.delay)
-        
-        
-        
+        self.driver, self.language = login_remedy(hide,self.user,self.password,self.remedy_url,self.delay)        
+        self.set_dic_date()
         
     def create_new_rfc(self):
         try:
@@ -110,15 +93,16 @@ class RFC():
         except TimeoutException:
             print("Error al cargar la lista de opciones")
         
-        gestion_cambio_op = xp_menu_gdc_hm
-        nuevo_cambio_op = xp_menu_gdc_nchange_hm
-        # if self.is_headlessmode():
-        #     print('headlessmode detected')
-        #     gestion_cambio_op = xp_menu_gdc_hm
-        #     nuevo_cambio_op = xp_menu_gdc_nchange_hm
-        # else:
-        #     gestion_cambio_op = xp_menu_gdc
-        #     nuevo_cambio_op = xp_menu_gdc_nchange
+        
+        if self.is_headlessmode():
+            print('headlessmode detected')
+        
+        if self.language == lang_en:
+            gestion_cambio_op = xp_menu_gdc_hm
+            nuevo_cambio_op = xp_menu_gdc_nchange_hm
+        else:
+            gestion_cambio_op = xp_menu_gdc
+            nuevo_cambio_op = xp_menu_gdc_nchange
 
         WebDriverWait(self.driver, self.delay)
         #seleccionar un nuevo cambio
@@ -129,14 +113,44 @@ class RFC():
         valida_alert(self.driver,self.delay,'sesión al crear rfc')
         print('rfc created: ', self.driver.title)
 
+    def search_rfc(self):
+        return None
+
     def is_headlessmode(self):
         return self.driver.execute_script("return navigator.plugins.length == 0")
 
+    def set_dic_date(self):
+        date_ini = self.get_date_start()
+        date_end = self.get_date_end()
+        dic_txt['arid_WIN_3_303924000'] = date_ini
+        for key in dic_date_init:
+            dic_date_init[key] = date_ini
+        for key in dic_date_end:
+            dic_date_end[key] = date_end
+
+    def get_date_add(self, dias):
+        fecha = date.today() + timedelta(days=dias)
+        if self.language == lang_en:
+            #formato gringo
+            fecha = fecha.strftime('%m/%d/%Y %H:%M:%S')
+        else:
+            fecha = fecha.strftime('%d/%m/%y %H:%M:%S')
+        print(fecha)
+        return fecha
+
+    def get_date_start(self):
+        return self.get_date_add(1)
+
+    def get_date_end(self):
+        return self.get_date_add(2)
+
     def set_rfc_id(self):
-        print(self.driver.title)
-        
-        self.rfc_id = self.driver.find_element_by_id('arid_WIN_3_1000000182').get_attribute('value')
-        print(self.rfc_id)
+        self.rfc_id = self.get_rfc_number()
+        print('RFC: ', self.rfc_id)
+
+    def get_rfc_number(self):
+        rfc = self.driver.find_element_by_id('arid_WIN_3_1000000182').get_attribute('value')
+        return(rfc)
         
     def calendar_action(self):
         btn = self.driver.find_element_by_id('WIN_3_303924000')
@@ -166,7 +180,8 @@ class RFC():
             print('data descriptiva de RFC ingresada')
             #seleccionar y completar tab de fechas
             self.sel_fecha_sistema()
-            self.complete_txt(dic_date)
+            self.complete_txt(dic_date_init)
+            self.complete_txt(dic_date_end)
             print('fechas de tab fechas ingresadas')
             #seleccionar y completar tab de categorizacion
             self.sel_categorizacion()
@@ -174,7 +189,8 @@ class RFC():
             print('data de categorización ingresada')
             #seleccionar y completar popup de riesgos.
             #self.set_riesgo_values()
-        except:
+        except Exception as e:
+            print(e)
             print('error: cerraremos sesión y pagina')
             self.cerrar_sesion()
             time.sleep(self.delay)
@@ -254,32 +270,23 @@ class RFC():
         self.select_tab(dic_tab['fecha_sistema'])
 
     def save_rfc(self):
-        #self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        #save_id = 'WIN_3_1001' submit
-        #WIN_3_1002 query
-        #div class btntextdiv
-        save_id = 'WIN_3_1001' #modify
-        # btn_ = self.driver.find_element_by_id('WIN_4_304255220')
-        # btn_.send_keys(Keys.TAB)
-        # time.sleep(self.delay)
-        # btn_.send_keys(Keys.TAB)
-        # time.sleep(self.delay)
-        # btn_.send_keys(Keys.TAB)
+        save_id = 'WIN_3_1001'
         btn_ = self.driver.find_element_by_id(save_id)
-        
-        print(btn_.get_attribute('outerHTML'))
         btn_.click()
-        #btn_.send_keys(Keys.RETURN)
         
-        time.sleep(self.delay * 3)
+        time.sleep(self.delay * 2)
         self.print_error_txt()
 
+        return self.valida_save_rfc()
+            
+    def valida_save_rfc(self):
         nu_rfc = self.get_rfc_number()
         if nu_rfc == self.rfc_id:
             print(nu_rfc, self.rfc_id,' : error al guardar RFC.')
+            return False
         else:
             print(nu_rfc, self.rfc_id, ' :: RFC Guardado OK')
-            
+            return True
 
     def save_riesgo(self):
         save_id = 'WIN_0_300994900'
@@ -363,9 +370,6 @@ class RFC():
         else:
             print('no se encontró alert.')
 
-    def get_rfc_number(self):
-        rfc = self.driver.find_element_by_id('arid_WIN_3_1000000182').get_attribute('value')
-        return(rfc)
 
 def valida_alert(driver, delay, message = 'default'):
     alert_ap = True
@@ -450,7 +454,7 @@ def login_remedy(hide=False,user='',password='',remedy_url='',delay=0):
     #verifica que el error de la sesión tomada, aparezca como promtext
 
     print('Usuario con sesión, en página: ', driver.title)
-    return driver
+    return driver, language
 
 
 def load_data():
@@ -469,6 +473,11 @@ def set_chrome_options(hide=False) -> None:
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--start-maximized")
     chrome_prefs = {}
-    chrome_options.experimental_options["prefs"] = chrome_prefs
-    chrome_prefs["profile.default_content_settings"] = {"images": 2}
+    chrome_prefs["profile.default_content_settings"] = {"images": 2, "intl.accept_languages":'es'}
+    #chrome_prefs["intl.accept_languages"] = {'es'}
+    #chrome_options.experimental_options["prefs"] = chrome_prefs
+
+    chrome_options.add_experimental_option('prefs', {'intl.accept_languages': 'es'})
+    #options.add_experimental_option('prefs', {'intl.accept_languages': 'en,en_US'})
+
     return chrome_options
