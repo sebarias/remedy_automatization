@@ -370,6 +370,44 @@ class RFC():
         else:
             print('no se encontró alert.')
 
+    def upload_file(self, url_file):
+        try:
+            self.driver.find_element_by_id('reg_img_304247100').click()
+            #cambiar de iframe
+            iframe = driver.find_elements_by_tag_name('iframe')
+            self.driver.switch_to.frame(iframe[1])
+
+            #set file location
+            #file = '/Users/sariasc/GonzaloBarra.png'
+            file = url_file
+            #agregar archivo adjunto
+            self.driver.\
+                find_element_by_id('PopupAttInput').\
+                send_keys(file)
+            #presionar aceptar
+            self.driver.\
+                find_element_by_id('PopupAttFooter').\
+                find_elements_by_class_name('PopupBtn')[0].click()
+            #switch al contentedor
+            self.driver.switch_to.default_content()
+            return True
+        except Exception as e:
+            print('error al subir archivo')
+            print(e)
+            return False
+        
+
+    def add_nota(self, nota, file=False, url_file = None):
+        #add nota
+        self.driver.find_element_by_id('arid_WIN_3_304247080')\
+             .send_keys(nota)
+        #upload_file
+        if file:
+            self.upload_file(url_file)
+            time.sleep(self.delay)
+        #btn agregar
+        self.driver.find_element_by_id('WIN_3_304247110').click()
+
 
 def valida_alert(driver, delay, message = 'default'):
     alert_ap = True
