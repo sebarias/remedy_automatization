@@ -386,9 +386,9 @@ class RFC():
             url = None
             notas = trabajo['trabajo_data']['trabajo_notas']
             print('trabajo: ', trabajo)
-            if trabajo['trabajo_data']['file']:
+            if trabajo['trabajo_data']['file'] == True:
                 url = trabajo['trabajo_data']['url_file']
-                file = True
+                up_file = True
                 if 'detalle_tipo' not in trabajo['trabajo_data']:
                     tipo = 'default'
                 else:
@@ -417,20 +417,24 @@ class RFC():
 
     def upload_file(self, url_file):
         try:
+            time.sleep(self.delay)
             self.driver.find_element_by_id('reg_img_304247100').click()
             #cambiar de iframe
-            iframe = driver.find_elements_by_tag_name('iframe')
+            iframe = self.driver.find_elements_by_tag_name('iframe')
             self.driver.switch_to.frame(iframe[1])
 
             #set file location
             #file = '/Users/sariasc/GonzaloBarra.png'
-            file = url_file
+            #url = url_file
             #agregar archivo adjunto
-            set_text('PopupAttInput',file)
+            #PopupAttInput
+            self.set_txt('PopupAttInput',url_file)
+            
             #presionar aceptar
             self.driver.\
                 find_element_by_id('PopupAttFooter').\
                 find_elements_by_class_name('PopupBtn')[0].click()
+            time.sleep(self.delay * 2)
             #switch al contentedor
             self.driver.switch_to.default_content()
             print('upload file ok')
@@ -441,12 +445,12 @@ class RFC():
             return False
         
 
-    def add_detalle_trabajo(self, nota, file=False, url_file = None):
+    def add_detalle_trabajo(self, nota, up_file=False, url_file = None):
         try:
             #add nota
             self.set_txt('arid_WIN_3_304247080', nota)
             #upload_file
-            if file:
+            if up_file:
                 self.upload_file(url_file)
                 time.sleep(self.delay)
             #btn agregar
@@ -506,8 +510,8 @@ def login_remedy(hide=False,user='',password='',remedy_url='',delay=0):
     
     chrome_options = set_chrome_options(hide)
     op=None
-    #driver = webdriver.Chrome('/usr/local/bin/chromedriver', options=chrome_options)
-    driver = webdriver.Remote("http://127.0.0.1:4444/wd/hub", options=chrome_options)
+    driver = webdriver.Chrome('/usr/local/bin/chromedriver', options=chrome_options)
+    #driver = webdriver.Remote("http://127.0.0.1:4444/wd/hub", options=chrome_options)
     language = driver.execute_script("return window.navigator.userLanguage || window.navigator.language")
     
     print('lang:', language)
