@@ -10,6 +10,7 @@ from selenium.webdriver.common.by import By
 from datetime import date, timedelta
 import time
 import json
+import os
 
 
 
@@ -252,14 +253,21 @@ class RFC():
             time.sleep(self.delay)
             if is_service:
                 self.scroll_down(60)
-            #print(len(self.driver.find_elements_by_class_name('MenuOuter')))
+            #print('opciones: ', len(self.driver.find_elements_by_class_name('MenuOuter')))
+            #print(self.driver.find_elements_by_class_name('MenuOuter').get_attribute('outerHTML'))
+            time.sleep(self.delay)
             div = self.driver.find_elements_by_class_name('MenuOuter')[-1]
             div = div.\
-                find_elements_by_class_name('MenuTableRow')[op_id-1].\
-                    click()
+                find_elements_by_class_name('MenuTableRow')
+            print('opciones: ', len(div))
+            print(div[op_id-1].get_attribute('outerHTML'))
+            div[op_id-1].click()
 
     def set_txt(self, txt_id, txt_value):
-        self.driver.find_element_by_id(txt_id).send_keys(txt_value)
+        txt = self.driver.find_element_by_id(txt_id)
+        txt.clear()
+        txt.send_keys(txt_value)
+        print('text ingresado: ',txt.get_attribute('value'))
 
     def get_txt(self, txt_id):
         self.driver.find_element_by_id(txt_id).get_attribute('value')
@@ -285,10 +293,11 @@ class RFC():
         btn_ = self.driver.find_element_by_id(save_id)
         btn_.click()
         
-        time.sleep(self.delay * 2)
-        self.print_error_txt()
-
-        return self.valida_save_rfc()
+        time.sleep(self.delay * 3)
+        if self.print_error_txt():
+            return False
+        else:
+            return self.valida_save_rfc()
             
     def valida_save_rfc(self):
         nu_rfc = self.get_rfc_number()
@@ -352,9 +361,10 @@ class RFC():
         try:
             pr = self.driver.find_element_by_class_name('prompttext')
             print(pr.text)
+            return True
         except (NoSuchElementException) as py_ex:
-            print (py_ex)
-            print (py_ex.args)
+            print('no se encuentra elemento <<error>> en pagina')
+            return False
 
     def cerrar_sesion(self):
         self.driver.find_element_by_id('WIN_0_300000044').click()
@@ -415,6 +425,8 @@ class RFC():
         else:
             print('no se encontró alert.')
 
+    
+
     def upload_file(self, url_file):
         try:
             time.sleep(self.delay)
@@ -422,14 +434,7 @@ class RFC():
             #cambiar de iframe
             iframe = self.driver.find_elements_by_tag_name('iframe')
             self.driver.switch_to.frame(iframe[1])
-
-            #set file location
-            #file = '/Users/sariasc/GonzaloBarra.png'
-            #url = url_file
-            #agregar archivo adjunto
-            #PopupAttInput
             self.set_txt('PopupAttInput',url_file)
-            
             #presionar aceptar
             self.driver.\
                 find_element_by_id('PopupAttFooter').\
@@ -441,7 +446,7 @@ class RFC():
             return True
         except Exception as e:
             print('error al subir archivo')
-            print(e)
+            print(e) 
             return False
         
 
@@ -451,8 +456,11 @@ class RFC():
             self.set_txt('arid_WIN_3_304247080', nota)
             #upload_file
             if up_file:
-                self.upload_file(url_file)
-                time.sleep(self.delay)
+                if validate_file(url_file):
+                    self.upload_file(url_file)
+                    time.sleep(self.delay)
+                else:
+                    print('file upload problem')
             #btn agregar
             self.driver.find_element_by_id('WIN_3_304247110').click()
             print('add detalle trabajo ok')
@@ -510,8 +518,8 @@ def login_remedy(hide=False,user='',password='',remedy_url='',delay=0):
     
     chrome_options = set_chrome_options(hide)
     op=None
-    driver = webdriver.Chrome('/usr/local/bin/chromedriver', options=chrome_options)
-    #driver = webdriver.Remote("http://127.0.0.1:4444/wd/hub", options=chrome_options)
+    #driver = webdriver.Chrome('/usr/local/bin/chromedriver', options=chrome_options)
+    driver = webdriver.Remote("http://127.0.0.1:4444/wd/hub", options=chrome_options)
     language = driver.execute_script("return window.navigator.userLanguage || window.navigator.language")
     
     print('lang:', language)
@@ -547,6 +555,14 @@ def login_remedy(hide=False,user='',password='',remedy_url='',delay=0):
     print('Usuario con sesión, en página: ', driver.title)
     return driver, language
 
+def validate_file(url_file):
+        try:
+            size = os.path.getsize(url_file) 
+            print('Size of file is', size, 'bytes')
+        except OSError as e:
+            print(e)
+            return False
+        return True
 
 def load_data():
     with open('config.json', 'r') as j:
