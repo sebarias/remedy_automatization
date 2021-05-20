@@ -68,6 +68,7 @@ class RFC():
         self.data_basic = data['basic']
         self.data_categ = data['categorizacion']
         self.data_riesgo = data['riesgo']
+        self.detalle_trabajo = data['detalle_trabajo']
         self.driver, self.language = login_remedy(hide,self.user,self.password,self.remedy_url,self.delay)        
         self.set_dic_date()
         
@@ -189,6 +190,10 @@ class RFC():
             print('data de categorización ingresada')
             #seleccionar y completar popup de riesgos.
             #self.set_riesgo_values()
+            #add detalle de trabajo
+            self.sel_detalle()
+            self.set_detalle_trabajo()
+            
         except Exception as e:
             print(e)
             print('error: cerraremos sesión y pagina')
@@ -256,6 +261,9 @@ class RFC():
     def set_txt(self, txt_id, txt_value):
         self.driver.find_element_by_id(txt_id).send_keys(txt_value)
 
+    def get_txt(self, txt_id):
+        self.driver.find_element_by_id(txt_id).get_attribute('value')
+
     def complete_txt(self, dic):
         for key in dic:
             self.set_txt(key, dic[key])
@@ -268,6 +276,9 @@ class RFC():
 
     def sel_fecha_sistema(self):
         self.select_tab(dic_tab['fecha_sistema'])
+
+    def sel_detalle(self):
+        self.select_tab(dic_tab['detalle'])
 
     def save_rfc(self):
         save_id = 'WIN_3_1001'
@@ -354,6 +365,40 @@ class RFC():
     def close_page(self):
         self.driver.close()
 
+    def sel_tipo_trabajo(op):
+        try:
+            self.driver.find_element_by_id('WIN_4_304247210')\
+                .find_element_by_tag_name('a').click()
+                # /html/body/div[3]/div[2]/table/tbody/tr[14]/td[1]
+                # /html/body/div[3]/div[2]/table/tbody/tr[14]/td[1]
+                # /html/body/div[3]/div[2]/table/tbody/tr[14]/td[1]
+                # /html/body/div[4]/div[2]/table/tbody/tr[14]/td[1]
+            txt = self.get_txt('arid_WIN_4_304247210')
+            print(txt)
+        except Exception as e:
+            print('error al seleccionar tipo trabajo')
+            print(e)
+
+    def set_detalle_trabajo(self):
+        trabajos = self.detalle_trabajo
+        for trabajo in trabajos:
+            up_file = False
+            url = None
+            notas = trabajo['trabajo_data']['trabajo_notas']
+            print('trabajo: ', trabajo)
+            if trabajo['trabajo_data']['file']:
+                url = trabajo['trabajo_data']['url_file']
+                file = True
+                if 'detalle_tipo' not in trabajo['trabajo_data']:
+                    tipo = 'default'
+                else:
+                    tipo = trabajo['trabajo_data']['detalle_tipo']
+                
+                print('tipo: ', tipo)
+                
+            self.add_detalle_trabajo(notas, up_file ,url)
+                
+
     def aceptar_save_session_alert(self):
         """Se valida si aparece el alert que indica guardar antes de cerrar sesion"""
         iframe = self.driver.find_elements_by_tag_name('iframe')
@@ -381,15 +426,14 @@ class RFC():
             #file = '/Users/sariasc/GonzaloBarra.png'
             file = url_file
             #agregar archivo adjunto
-            self.driver.\
-                find_element_by_id('PopupAttInput').\
-                send_keys(file)
+            set_text('PopupAttInput',file)
             #presionar aceptar
             self.driver.\
                 find_element_by_id('PopupAttFooter').\
                 find_elements_by_class_name('PopupBtn')[0].click()
             #switch al contentedor
             self.driver.switch_to.default_content()
+            print('upload file ok')
             return True
         except Exception as e:
             print('error al subir archivo')
@@ -397,17 +441,22 @@ class RFC():
             return False
         
 
-    def add_nota(self, nota, file=False, url_file = None):
-        #add nota
-        self.driver.find_element_by_id('arid_WIN_3_304247080')\
-             .send_keys(nota)
-        #upload_file
-        if file:
-            self.upload_file(url_file)
-            time.sleep(self.delay)
-        #btn agregar
-        self.driver.find_element_by_id('WIN_3_304247110').click()
-
+    def add_detalle_trabajo(self, nota, file=False, url_file = None):
+        try:
+            #add nota
+            self.set_txt('arid_WIN_3_304247080', nota)
+            #upload_file
+            if file:
+                self.upload_file(url_file)
+                time.sleep(self.delay)
+            #btn agregar
+            self.driver.find_element_by_id('WIN_3_304247110').click()
+            print('add detalle trabajo ok')
+        except Exception as e:
+            print('error al agregar detalle trabajo')
+            print(e)
+            return False
+        
 
 def valida_alert(driver, delay, message = 'default'):
     alert_ap = True
