@@ -248,6 +248,7 @@ class RFC():
 
             print(element_id, " ", op_name)
             op = self.driver.find_element_by_id(element_id)
+            print(op.get_attribute('outerHTML'))
             op = op.find_element_by_tag_name('a')
             op = op.click()
             time.sleep(self.delay)
@@ -260,7 +261,7 @@ class RFC():
             div = div.\
                 find_elements_by_class_name('MenuTableRow')
             print('opciones: ', len(div))
-            print(div[op_id-1].get_attribute('outerHTML'))
+            #print(div[op_id-1].get_attribute('outerHTML'))
             div[op_id-1].click()
 
     def set_txt(self, txt_id, txt_value):
@@ -375,7 +376,7 @@ class RFC():
     def close_page(self):
         self.driver.close()
 
-    def sel_tipo_trabajo(op):
+    def sel_tipo_trabajo(self,op):
         try:
             self.driver.find_element_by_id('WIN_4_304247210')\
                 .find_element_by_tag_name('a').click()
