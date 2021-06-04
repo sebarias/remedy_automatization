@@ -1,7 +1,7 @@
 {
     "id":"",
-    "user":"XXX",
-    "pass":"XXX",
+    "user":"XXXX",
+    "pass":"XXXXX",
     "remedy_url":"XXXX",
     "delay":2,
     "notas":"notas",
@@ -116,7 +116,7 @@
                 "trabajo_nombre":"ok_riesgo",
                 "trabajo_notas":"ok riesgo",
                 "file":true,
-                "url_file":"/Users/sariasc/GonzaloBarra2.png"
+                "url_file":"/Users/sariasc/Projects/python/reporte_aprobaciones.pdf"
             }
         },
         {

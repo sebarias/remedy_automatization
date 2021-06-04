@@ -7,6 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoAlertPresentException, NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from chromedriver_py import binary_path 
 from datetime import date, timedelta
 import time
 import json
@@ -20,11 +21,14 @@ lang_en = 'en-US'
 
 #xpath
 xp_menu_fix = '//*[@id="WIN_0_304327070"]'
-xp_menu_gdc = '//*[@id="WIN_0_80077"]/fieldset/div/div/div/div[10]/a'
+
 #cambiar para headless mode.
 xp_menu_gdc_hm = '//*[@id="WIN_0_80077"]/fieldset/div/div/div/div[6]/a'
 xp_menu_gdc_nchange = '//*[@id="WIN_0_80077"]/fieldset/div/div/div/div[10]/div/div[2]/a'
+xp_menu_gdc_schange = '//*[@id="WIN_0_80077"]/fieldset/div/div/div/div[10]/div/div[3]/a'
+
 xp_menu_gdc_nchange_hm = '//*[@id="WIN_0_80077"]/fieldset/div/div/div/div[6]/div/div[2]/a'
+xp_menu_gdc_schange_hm = '//*[@id="WIN_0_80077"]/fieldset/div/div/div/div[6]/div/div[3]/a'
 
 #IDs
 id_appmenu = 'WIN_0_304316340'
@@ -56,6 +60,8 @@ dic_tab['fecha_sistema'] = 5
 dic_tab['detalle'] = 1
 
 class RFC():
+    xp_menu_gdc = '//*[@id="WIN_0_80077"]/fieldset/div/div/div/div[10]/a'
+
     def __init__(self, hide = False):
         data = load_data()
         self.hide = hide
@@ -72,8 +78,8 @@ class RFC():
         self.detalle_trabajo = data['detalle_trabajo']
         self.driver, self.language = login_remedy(hide,self.user,self.password,self.remedy_url,self.delay)        
         self.set_dic_date()
-        
-    def create_new_rfc(self):
+    
+    def open_menu(self):
         try:
             #abrir menu de aplicaciones
             app_menu = self.driver.find_element_by_id('WIN_0_304316340').click()
@@ -94,28 +100,44 @@ class RFC():
 
         except TimeoutException:
             print("Error al cargar la lista de opciones")
-        
-        
+            return False
+        return True
+
+    
+    def select_opcion_gdc(self, opcion='new'):
+
+        if opcion == 'new':
+            op_hm = xp_menu_gdc_nchange_hm
+            op = xp_menu_gdc_nchange
+        else:
+            op_hm = xp_menu_gdc_schange_hm
+            op = xp_menu_gdc_schange
+
         if self.is_headlessmode():
             print('headlessmode detected')
         
         if self.language == lang_en:
-            gestion_cambio_op = xp_menu_gdc_hm
-            nuevo_cambio_op = xp_menu_gdc_nchange_hm
-        else:
-            gestion_cambio_op = xp_menu_gdc
-            nuevo_cambio_op = xp_menu_gdc_nchange
+            self.xp_menu_gdc = xp_menu_gdc_hm
+            op = op_hm
 
         WebDriverWait(self.driver, self.delay)
         #seleccionar un nuevo cambio
-        gdc_op = self.driver.find_element_by_xpath(gestion_cambio_op)
-        change = self.driver.find_element_by_xpath(nuevo_cambio_op)
+        gdc_op = self.driver.find_element_by_xpath(self.xp_menu_gdc)
+        change = self.driver.find_element_by_xpath(op)
 
         ActionChains(self.driver).move_to_element(gdc_op).click(change).perform()
-        valida_alert(self.driver,self.delay,'sesión al crear rfc')
-        print('rfc created: ', self.driver.title)
+        valida_alert(self.driver,self.delay,'sesión al crear/buscar rfc')
+        print('rfc created/search: ', self.driver.title)
+        return True
 
-    def search_rfc(self):
+    def select_search_rfc(self):
+        if self.open_menu():
+            self.select_opcion_gdc('search')
+        return None
+    
+    def create_new_rfc(self):
+        if self.open_menu():
+            self.select_opcion_gdc()
         return None
 
     def is_headlessmode(self):
@@ -368,7 +390,8 @@ class RFC():
             return False
 
     def cerrar_sesion(self):
-        self.driver.find_element_by_id('WIN_0_300000044').click()
+        self.driver.find_element_by_link_text('Cerrar sesión').click()
+        #self.driver.find_element_by_id('WIN_0_300000044').click()
         self.aceptar_save_session_alert()
         print('cierre sesión ok: page title >', self.driver.title)
         
@@ -469,6 +492,33 @@ class RFC():
             print('error al agregar detalle trabajo')
             print(e)
             return False
+
+    def find_rfc(self, rfcid):
+        #WIN_0_304276710
+        try:
+
+            self.driver.find_element_by_id('WIN_0_304276710').click()
+            print('focus in rfc id')
+            rfc_txt = self.get_rfc_number()
+            print('rfc: ',rfc_txt)
+            if not rfc_txt:
+                self.rfc_id = rfcid
+                self.set_txt('arid_WIN_3_1000000182', self.rfc_id)
+                self.driver.find_element_by_id('WIN_3_1002').click()
+                
+            else:
+                raise Exception('problema al buscar rfc. Rfc Txt no vacío')
+
+            #error = self.driver.find_element_by_id('WIN_0_304276710')
+            time.sleep(self.delay)  
+            if self.print_error_txt():
+                return False
+            else:
+                return True
+            
+        except Exception as e:
+            print('error al buscar rfc', e)
+            return False
         
 
 def valida_alert(driver, delay, message = 'default'):
@@ -519,8 +569,8 @@ def login_remedy(hide=False,user='',password='',remedy_url='',delay=0):
     
     chrome_options = set_chrome_options(hide)
     op=None
-    #driver = webdriver.Chrome('/usr/local/bin/chromedriver', options=chrome_options)
-    driver = webdriver.Remote("http://127.0.0.1:4444/wd/hub", options=chrome_options)
+    driver = webdriver.Chrome(executable_path=binary_path, options=chrome_options)
+    #driver = webdriver.Remote("http://127.0.0.1:4444/wd/hub", options=chrome_options)
     language = driver.execute_script("return window.navigator.userLanguage || window.navigator.language")
     
     print('lang:', language)
