@@ -320,7 +320,11 @@ class RFC():
         if self.print_error_txt():
             return False
         else:
-            return self.valida_save_rfc()
+            self.select_search_rfc()
+            time.sleep(self.delay)
+            time.sleep(self.delay)
+            self.find_rfc(self.rfc_id)
+            return self.find_rfc(self.rfc_id)
             
     def valida_save_rfc(self):
         nu_rfc = self.get_rfc_number()
@@ -494,22 +498,31 @@ class RFC():
             return False
 
     def find_rfc(self, rfcid):
-        #WIN_0_304276710
         try:
-
-            self.driver.find_element_by_id('WIN_0_304276710').click()
+            #self.driver.find_element_by_id('WIN_0_304276710').click()
             print('focus in rfc id')
             rfc_txt = self.get_rfc_number()
             print('rfc: ',rfc_txt)
-            if not rfc_txt:
-                self.rfc_id = rfcid
-                self.set_txt('arid_WIN_3_1000000182', self.rfc_id)
-                self.driver.find_element_by_id('WIN_3_1002').click()
-                
-            else:
-                raise Exception('problema al buscar rfc. Rfc Txt no vacío')
-
-            #error = self.driver.find_element_by_id('WIN_0_304276710')
+            self.rfc_id = rfcid
+            #coloca RFC id
+            self.driver.find_element_by_id('arid_WIN_3_1000000182').clear()
+            self.set_txt('arid_WIN_3_1000000182', self.rfc_id)
+            #bton buscar
+            elm = self.driver.find_elements_by_link_text('Buscar')
+            print(len(elm))
+            #self.driver.find_element_by_id('WIN_3_1002').click()
+            elm[0].click()
+            # if not rfc_txt:
+            #     self.rfc_id = rfcid
+            #     #coloca RFC id
+            #     self.set_txt('arid_WIN_3_1000000182', self.rfc_id)
+            #     #bton buscar
+            #     elm = self.driver.find_elements_by_link_text('Buscar')
+            #     print(len(elm))
+            #     #self.driver.find_element_by_id('WIN_3_1002').click()
+            #     elm[0].click()
+            # else:
+            #     raise Exception('problema al buscar rfc. Rfc Txt no vacío')
             time.sleep(self.delay)  
             if self.print_error_txt():
                 return False

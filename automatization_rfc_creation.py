@@ -3,7 +3,7 @@ import time
 import sys
 
 def main():
-    headless = True
+    headless = False
     rfc = utils.RFC(headless)
     time.sleep(3)
     rfc.create_new_rfc()
@@ -69,4 +69,4 @@ if __name__ == "__main__":
     #main_uploadfile()
     #main_without_save()
     main_search()
-    #main()
+    # main()
