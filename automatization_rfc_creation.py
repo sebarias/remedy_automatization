@@ -34,14 +34,16 @@ def main_uploadfile():
     rfc.close_page()
 
 def main_without_save():
-    headless = True
+    headless = False
     rfc = utils.RFC(headless)
     time.sleep(3)
     rfc.create_new_rfc()
     time.sleep(1)
     rfc.set_rfc_id()
     time.sleep(2)
-    rfc.setting_data_mobile()
+    #rfc.setting_data_mobile()
+    time.sleep(2)
+    rfc.set_detalle_trabajo()
     time.sleep(2)
     # rfc.save_rfc()
     # time.sleep(4)
@@ -56,10 +58,14 @@ def main_search():
     rfc.select_search_rfc()
     
     time.sleep(2)
-    rfc.find_rfc('499999')
-    rfc.cerrar_sesion()
+    rfc.find_rfc('197204')
     time.sleep(2)
-    rfc.close_page()
+    rfc.set_detalle_trabajo()
+    time.sleep(2)
+    time.sleep(2)
+    #rfc.cerrar_sesion()
+    #time.sleep(2)
+    #rfc.close_page()
 
 if __name__ == "__main__":
     print("Python version")
@@ -67,6 +73,6 @@ if __name__ == "__main__":
     print("Version info.")
     print (sys.version_info)
     #main_uploadfile()
-    #main_without_save()
-    main_search()
+    main_without_save()
+    #main_search()
     # main()

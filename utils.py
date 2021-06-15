@@ -394,7 +394,10 @@ class RFC():
             return False
 
     def cerrar_sesion(self):
-        self.driver.find_element_by_link_text('Cerrar sesión').click()
+        if self.language != 'en-US':
+            self.driver.find_element_by_link_text('Cerrar sesión').click()
+        else:
+            self.driver.find_element_by_id('WIN_0_300000044').click()
         #self.driver.find_element_by_id('WIN_0_300000044').click()
         self.aceptar_save_session_alert()
         print('cierre sesión ok: page title >', self.driver.title)
@@ -441,7 +444,7 @@ class RFC():
         """Se valida si aparece el alert que indica guardar antes de cerrar sesion"""
         iframe = self.driver.find_elements_by_tag_name('iframe')
         if len(iframe) > 1:
-            print('se detecta alert')
+            print('se detecta alert', len(iframe), iframe)
             self.driver.switch_to.frame(iframe[1])
             #presionar aceptar
             self.driver.\
@@ -461,16 +464,25 @@ class RFC():
             self.driver.find_element_by_id('reg_img_304247100').click()
             #cambiar de iframe
             iframe = self.driver.find_elements_by_tag_name('iframe')
-            self.driver.switch_to.frame(iframe[1])
-            self.set_txt('PopupAttInput',url_file)
-            #presionar aceptar
-            self.driver.\
-                find_element_by_id('PopupAttFooter').\
-                find_elements_by_class_name('PopupBtn')[0].click()
-            time.sleep(self.delay * 2)
-            #switch al contentedor
-            self.driver.switch_to.default_content()
-            print('upload file ok')
+            for ifr in iframe:
+                print(ifr.get_attribute('outerHTML'))
+                self.driver.switch_to.frame(ifr)
+                try:
+                    self.set_txt('PopupAttInput',url_file)
+                    self.driver.\
+                    find_element_by_id('PopupAttFooter').\
+                    find_elements_by_class_name('PopupBtn')[0].click()
+                    time.sleep(self.delay * 2)
+                    #switch al contentedor
+                    
+                    print('upload file ok')
+                    break
+                except (NoSuchElementException) as ex:
+                    print('en este iframe no está el popup')
+                    #next
+                finally:
+                    self.driver.switch_to.default_content()
+          
             return True
         except Exception as e:
             print('error al subir archivo')
