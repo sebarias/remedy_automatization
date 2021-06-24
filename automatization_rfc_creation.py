@@ -52,20 +52,20 @@ def main_without_save():
     rfc.close_page()
 
 def main_search():
+    print('ingrese RFC a buscar:')
+    rfc_id = str(input())
     headless = False
     rfc = utils.RFC(headless)
     time.sleep(3)
     rfc.select_search_rfc()
     
     time.sleep(2)
-    rfc.find_rfc('197204')
-    time.sleep(2)
-    rfc.set_detalle_trabajo()
+    rfc.find_rfc(rfc_id)
     time.sleep(2)
     time.sleep(2)
-    #rfc.cerrar_sesion()
-    #time.sleep(2)
-    #rfc.close_page()
+    rfc.cerrar_sesion()
+    time.sleep(2)
+    rfc.close_page()
 
 if __name__ == "__main__":
     print("Python version")
@@ -73,6 +73,6 @@ if __name__ == "__main__":
     print("Version info.")
     print (sys.version_info)
     #main_uploadfile()
-    main_without_save()
-    #main_search()
+    #main_without_save()
+    main_search()
     # main()
