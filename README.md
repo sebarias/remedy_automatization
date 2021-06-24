@@ -52,7 +52,7 @@ Este programa cuenta con una clase llamada RFC descrita en utils.py, que cuenta 
 En el programa Python automatization_rfc_creation.py es posible hallar distintas configuraciones de ejecución, para aplicar la que se requiera.
 por ejemplo, si es necesario crear sólo un RFC vacío sin abrir Chrome(modo invisible), se puede ejecutar de la siguiente manera.
 
-'   headless = True
+`   headless = True
     rfc = utils.RFC(headless)
     time.sleep(3)
     rfc.create_new_rfc()
@@ -65,7 +65,7 @@ por ejemplo, si es necesario crear sólo un RFC vacío sin abrir Chrome(modo inv
     #time.sleep(4)
     rfc.cerrar_sesion()
     time.sleep(2)
-    rfc.close_page()'
+    rfc.close_page()`
 
 o ejecutar la función main().
 
