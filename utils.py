@@ -103,7 +103,6 @@ class RFC():
             return False
         return True
 
-    
     def select_opcion_gdc(self, opcion='new'):
 
         if opcion == 'new':
@@ -191,12 +190,36 @@ class RFC():
         cal_txt = self.driver.find_element_by_id('arid_WIN_3_303924000').get_attribute('value')
         print(cal_txt)
 
+    def setting_data_mobile_back(self):
+        #volver a copiar en setting data mobile original
+        print('opciones básicas elegidas')
+        #set txt
+        self.complete_txt(dic_txt)
+        print('data descriptiva de RFC ingresada')
+        #seleccionar y completar tab de fechas
+        self.sel_fecha_sistema()
+        self.complete_txt(dic_date_init)
+        self.complete_txt(dic_date_end)
+        print('fechas de tab fechas ingresadas')
+        #seleccionar y completar tab de categorizacion
+        self.sel_categorizacion()
+        self.choose_op(self.data_categ)
+        print('data de categorización ingresada')
+        #seleccionar y completar popup de riesgos.
+        #self.set_riesgo_values()
+        #add detalle de trabajo
+        self.sel_detalle()
+        self.set_detalle_trabajo()
       
     def setting_data_mobile(self):
         try:
             self.set_grupo_coordinador()
             #set opciones data 
             print('grupo coordinador elegido')
+            operator = self.data_basic.pop('coordinador_de_cambio')
+            print(operator)
+            print(self.data_basic)
+            self.get_data_combo(operator)
             self.choose_op(self.data_basic)
             print('opciones básicas elegidas')
             #set txt
@@ -216,6 +239,7 @@ class RFC():
             #add detalle de trabajo
             self.sel_detalle()
             self.set_detalle_trabajo()
+            #se elimino resto codigo para probar funcion que trae los coordinadores.
             
         except Exception as e:
             print(e)
@@ -256,6 +280,36 @@ class RFC():
         for i in range(0,t):
             self.driver.find_elements_by_class_name('MenuScrollDown')[-1].click()
 
+    def get_data_combo(self,dic):
+        element_id = dic['id']
+        print(element_id)
+        
+        div = self.get_div_by_id(element_id)
+        coords = self.for_div(div)
+        print(coords)
+        print('exportando data de coordinadores a json')
+        write_data(coords)
+        return coords
+
+    def get_div_by_id(self,id, is_service=False):
+        """
+        obtiene un div a partir del id del elemento que lo continene.
+        especial para sacar data de combos.
+        """
+        op = self.driver.find_element_by_id(id)
+        #print(op.get_attribute('outerHTML'))
+        op = op.find_element_by_tag_name('a')
+        op = op.click()
+        time.sleep(self.delay)
+        if is_service:
+            self.scroll_down(60)
+        #print('opciones: ', len(self.driver.find_elements_by_class_name('MenuOuter')))
+        #print(self.driver.find_elements_by_class_name('MenuOuter').get_attribute('outerHTML'))
+        time.sleep(self.delay)
+        div = self.driver.find_elements_by_class_name('MenuOuter')[-1]
+        div = div.\
+            find_elements_by_class_name('MenuTableRow')
+        return div
 
     def choose_op(self, dic):
         for key in dic:
@@ -270,7 +324,7 @@ class RFC():
 
             print(element_id, " ", op_name)
             op = self.driver.find_element_by_id(element_id)
-            print(op.get_attribute('outerHTML'))
+            #print(op.get_attribute('outerHTML'))
             op = op.find_element_by_tag_name('a')
             op = op.click()
             time.sleep(self.delay)
@@ -282,9 +336,21 @@ class RFC():
             div = self.driver.find_elements_by_class_name('MenuOuter')[-1]
             div = div.\
                 find_elements_by_class_name('MenuTableRow')
+            
             print('opciones: ', len(div))
             #print(div[op_id-1].get_attribute('outerHTML'))
             div[op_id-1].click()
+        return div
+
+    def for_div(self,div):
+        arr = []
+        for i, val in enumerate(div):
+            coords = {}
+            coords['id'] = i
+            coords['name'] = val.find_element_by_class_name('MenuEntryName').text
+            
+            arr.append(coords)
+        return arr
 
     def set_txt(self, txt_id, txt_value):
         txt = self.driver.find_element_by_id(txt_id)
@@ -593,9 +659,8 @@ def login_remedy(hide=False,user='',password='',remedy_url='',delay=0):
     #set the nav
     
     chrome_options = set_chrome_options(hide)
-    op=None
-    driver = webdriver.Chrome(executable_path=binary_path, options=chrome_options)
-    #driver = webdriver.Remote("http://127.0.0.1:4444/wd/hub", options=chrome_options)
+    #driver = webdriver.Chrome(executable_path=binary_path, options=chrome_options)
+    driver = webdriver.Remote("http://127.0.0.1:4444/wd/hub", options=chrome_options)
     language = driver.execute_script("return window.navigator.userLanguage || window.navigator.language")
     
     print('lang:', language)
@@ -644,6 +709,10 @@ def load_data():
     with open('config.json', 'r') as j:
         data = json.load(j)
         return data
+def write_data(data):
+    with open('data.json', 'w') as outfile:
+        json.dump(data, outfile)
+        print('data guardada en data.json')
 
 def set_chrome_options(hide=False) -> None:
     """Sets chrome options for Selenium.
@@ -659,6 +728,8 @@ def set_chrome_options(hide=False) -> None:
     chrome_prefs["profile.default_content_settings"] = {"images": 2, "intl.accept_languages":'es'}
     #chrome_prefs["intl.accept_languages"] = {'es'}
     #chrome_options.experimental_options["prefs"] = chrome_prefs
+    #chrome_options.binary_location = "/Users/sariasc/opt/anaconda3/lib/python3.7/site-packages/chromedriver"
+
 
     chrome_options.add_experimental_option('prefs', {'intl.accept_languages': 'es'})
     #options.add_experimental_option('prefs', {'intl.accept_languages': 'en,en_US'})
