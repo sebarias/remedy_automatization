@@ -18,6 +18,21 @@ def main():
     time.sleep(2)
     rfc.close_page()
 
+def main_2():
+    headless = False
+    rfc = utils.RFC(headless)
+    time.sleep(3)
+    if rfc.create_new_basic_rfc():
+        print('create RFC ok')
+        time.sleep(2)
+        rfc.save_rfc()
+        time.sleep(4)
+        rfc.cerrar_sesion()
+        time.sleep(2)
+        rfc.close_page()
+    else:
+        print('Problem to create RFC')
+
 def main_uploadfile():
     headless = True
     rfc = utils.RFC(headless)
@@ -74,5 +89,5 @@ if __name__ == "__main__":
     print (sys.version_info)
     #main_uploadfile()
     #main_without_save()
-    main_search()
-    # main()
+    #main_search()
+    main_2()

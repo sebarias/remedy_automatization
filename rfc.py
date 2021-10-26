@@ -13,9 +13,11 @@ import time
 import json
 import os
 
+
+
+
 #set Global Variables
 lang_en = 'en-US'
-
 
 #xpath
 xp_menu_fix = '//*[@id="WIN_0_304327070"]'
@@ -52,9 +54,6 @@ dic_date_end['arid_WIN_3_1000000362'] = None
 dic_date_end['arid_WIN_3_1000000364'] = None
 dic_date_end['arid_WIN_3_1000000363'] = None
 
-
-
-
 dic_tab = {}
 dic_tab['categorizacion'] = 2
 dic_tab['fecha_sistema'] = 5
@@ -62,7 +61,6 @@ dic_tab['detalle'] = 1
 
 class RFC():
     xp_menu_gdc = '//*[@id="WIN_0_80077"]/fieldset/div/div/div/div[10]/a'
-    dic_date_basic = {}
 
     def __init__(self, hide = False, filename = None):
         #TODO: cambiar init a datos basicos, fecha inicio / fin solicitada , fecha deseada , resumen.
@@ -83,9 +81,9 @@ class RFC():
         self.detalle_trabajo = detalle_trabajo['detalle_trabajo']
         self.driver, self.language = login_remedy(hide,self.user,self.password,self.remedy_url,self.delay)        
         self.set_dic_date()
-        self.basic_filename = data['basic_filename']
-        data_basic = load_data(self.basic_filename)
-        self.dic_date_basic = data_basic
+
+    
+
     
     def open_menu(self):
         try:
@@ -146,31 +144,6 @@ class RFC():
         if self.open_menu():
             self.select_opcion_gdc()
         return None
-
-    def create_new_basic_rfc(self):
-        if self.create_new_rfc() is not None:
-            time.sleep(1)
-            self.set_rfc_id()
-            data = load_data(self.basic_filename)
-            #set resumen
-            if data is not None:
-                try:
-                    data_basic = data['data_basic']
-                    date_data = data['date_data']
-                    self.complete_txt(data_basic)
-                    #set fecha deseada
-                    #set fecha inicio
-                    #set fecha fin
-                    self.sel_fecha_sistema()
-                    self.complete_txt(date_data)
-                    return True
-                except Exception as e:
-                    print(e)
-                    print('error: cerraremos sesión y pagina')
-                    self.cerrar_sesion()
-                    time.sleep(self.delay)
-                    self.close_page()
-        return False
 
     def is_headlessmode(self):
         return self.driver.execute_script("return navigator.plugins.length == 0")
