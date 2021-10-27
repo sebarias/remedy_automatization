@@ -24,12 +24,7 @@ def main_2():
     time.sleep(3)
     if rfc.create_new_basic_rfc():
         print('create RFC ok')
-        time.sleep(2)
-        rfc.save_rfc()
-        time.sleep(4)
-        rfc.cerrar_sesion()
-        time.sleep(2)
-        rfc.close_page()
+        
     else:
         print('Problem to create RFC')
 

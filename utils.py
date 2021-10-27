@@ -79,8 +79,9 @@ class RFC():
         self.data_categ = data['categorizacion']
         self.data_riesgo = data['riesgo']
         #busco el detalle del trabajo
-        detalle_trabajo = load_data(filename)
-        self.detalle_trabajo = detalle_trabajo['detalle_trabajo']
+        if filename is not None:
+            detalle_trabajo = load_data(filename)
+            self.detalle_trabajo = detalle_trabajo['detalle_trabajo']
         self.driver, self.language = login_remedy(hide,self.user,self.password,self.remedy_url,self.delay)        
         self.set_dic_date()
         self.basic_filename = data['basic_filename']
@@ -144,10 +145,12 @@ class RFC():
     
     def create_new_rfc(self):
         if self.open_menu():
-            self.select_opcion_gdc()
+            return self.select_opcion_gdc()
+            
         return None
 
     def create_new_basic_rfc(self):
+        print('entrando a crear nuevo rfc')
         if self.create_new_rfc() is not None:
             time.sleep(1)
             self.set_rfc_id()
@@ -163,6 +166,12 @@ class RFC():
                     #set fecha fin
                     self.sel_fecha_sistema()
                     self.complete_txt(date_data)
+                    time.sleep(2)
+                    self.save_rfc()
+                    time.sleep(4)
+                    self.cerrar_sesion()
+                    time.sleep(2)
+                    self.close_page()
                     return True
                 except Exception as e:
                     print(e)
@@ -208,7 +217,7 @@ class RFC():
         rfc = self.driver.find_element_by_id('arid_WIN_3_1000000182').get_attribute('value')
         return(rfc)
         
-    def calendar_action(self):
+    def calendar_action_beta(self):
         btn = self.driver.find_element_by_id('WIN_3_303924000')
         btn = btn.find_element_by_tag_name('a')
         btn.click()
@@ -222,27 +231,6 @@ class RFC():
         time.sleep(self.delay)
         cal_txt = self.driver.find_element_by_id('arid_WIN_3_303924000').get_attribute('value')
         print(cal_txt)
-
-    def setting_data_mobile_back(self):
-        #volver a copiar en setting data mobile original
-        print('opciones básicas elegidas')
-        #set txt
-        self.complete_txt(dic_txt)
-        print('data descriptiva de RFC ingresada')
-        #seleccionar y completar tab de fechas
-        self.sel_fecha_sistema()
-        self.complete_txt(dic_date_init)
-        self.complete_txt(dic_date_end)
-        print('fechas de tab fechas ingresadas')
-        #seleccionar y completar tab de categorizacion
-        self.sel_categorizacion()
-        self.choose_op(self.data_categ)
-        print('data de categorización ingresada')
-        #seleccionar y completar popup de riesgos.
-        #self.set_riesgo_values()
-        #add detalle de trabajo
-        self.sel_detalle()
-        self.set_detalle_trabajo()
       
     def setting_data_mobile(self):
         try:
@@ -418,12 +406,15 @@ class RFC():
         time.sleep(self.delay * 3)
         if self.print_error_txt():
             return False
-        else:
-            self.select_search_rfc()
-            time.sleep(self.delay)
-            time.sleep(self.delay)
-            self.find_rfc(self.rfc_id)
-            return self.find_rfc(self.rfc_id)
+        return True
+
+    def buscarfc_beta(self):
+        
+        self.select_search_rfc()
+        time.sleep(self.delay)
+        time.sleep(self.delay)
+        self.find_rfc(self.rfc_id)
+        return self.find_rfc(self.rfc_id)
             
     def valida_save_rfc(self):
         nu_rfc = self.get_rfc_number()
