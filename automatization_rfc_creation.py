@@ -62,15 +62,14 @@ def main_without_save():
     rfc.close_page()
 
 def main_search():
-    print('ingrese RFC a buscar:')
-    rfc_id = str(input())
-    headless = False
-    rfc = utils.RFC(headless)
-    time.sleep(3)
-    rfc.select_search_rfc()
     
-    time.sleep(2)
-    rfc.find_rfc(rfc_id)
+    #rfc_id = 'CRQ000000205164'
+    rfc_id = 'CRQ000000505164'
+    headless = False
+    rfc = utils.RFC(headless, rfc = rfc_id)
+    time.sleep(3)
+    rfc.search_rfc()
+    
     time.sleep(2)
     time.sleep(2)
     rfc.cerrar_sesion()
@@ -84,5 +83,5 @@ if __name__ == "__main__":
     print (sys.version_info)
     #main_uploadfile()
     #main_without_save()
-    #main_search()
-    main_2()
+    main_search()
+    #main_2()

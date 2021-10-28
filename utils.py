@@ -62,31 +62,33 @@ dic_tab['detalle'] = 1
 
 class RFC():
     xp_menu_gdc = '//*[@id="WIN_0_80077"]/fieldset/div/div/div/div[10]/a'
-    dic_date_basic = {}
+    
+    hide : bool
+    user : str
+    password : str
+    remedy_url : str
+    rfc_id : str
+    driver : None
+    languague : None
+    delay : int
+    basic_filename : str
 
-    def __init__(self, hide = False, filename = None):
-        #TODO: cambiar init a datos basicos, fecha inicio / fin solicitada , fecha deseada , resumen.
+
+    def __init__(self, hide = False, filename = None, rfc = None):
+        """
+        metodo de inicialización de RFC. 
+        por defecto busca la información de inicio en el archivo config.json
+        """
         data = load_data()
         self.hide = hide
         self.user = data['user']
         self.password = data['pass']
         self.remedy_url = data['remedy_url']
-        self.rfc_id = ''
-        self.resumen = data['resumen']
-        self.notas = data['notas']
         self.delay = data['delay']
-        self.data_basic = data['basic']
-        self.data_categ = data['categorizacion']
-        self.data_riesgo = data['riesgo']
-        #busco el detalle del trabajo
-        if filename is not None:
-            detalle_trabajo = load_data(filename)
-            self.detalle_trabajo = detalle_trabajo['detalle_trabajo']
-        self.driver, self.language = login_remedy(hide,self.user,self.password,self.remedy_url,self.delay)        
-        self.set_dic_date()
+        self.rfc_id = ''
         self.basic_filename = data['basic_filename']
-        data_basic = load_data(self.basic_filename)
-        self.dic_date_basic = data_basic
+        self.rfc_id = rfc
+        
     
     def open_menu(self):
         try:
@@ -151,6 +153,7 @@ class RFC():
 
     def create_new_basic_rfc(self):
         print('entrando a crear nuevo rfc')
+        self.login_remedy() 
         if self.create_new_rfc() is not None:
             time.sleep(1)
             self.set_rfc_id()
@@ -180,6 +183,37 @@ class RFC():
                     time.sleep(self.delay)
                     self.close_page()
         return False
+
+    def search_rfc(self):
+        try:
+            rfc_found = False
+            self.login_remedy()
+            self.select_search_rfc()
+            time.sleep(2)
+            
+            print('rfc: ',self.rfc_id)
+            
+            #coloca RFC id
+            self.driver.find_element_by_id('arid_WIN_3_1000000182').clear()
+            self.set_txt('arid_WIN_3_1000000182', self.rfc_id)
+            #bton buscar
+            elm = self.driver.find_elements_by_link_text('Buscar')
+            print(len(elm))
+            #self.driver.find_element_by_class_name('searchsavechanges').click() #searchsavechanges
+            elm[0].click()
+            time.sleep(2)
+            result_box = self.driver.find_element_by_id('WIN_3_1020')
+            if result_box is not None:
+                #print(result_box.get_attribute('outerHTML'))
+                results = result_box.find_element_by_class_name('TableFtrR')
+                if results.text is not "":
+                    print("find text", results.text)
+                    rfc_found = True
+            return rfc_found
+            
+        except Exception as e:
+            print('error al buscar rfc', e)
+            return False
 
     def is_headlessmode(self):
         return self.driver.execute_script("return navigator.plugins.length == 0")
@@ -599,41 +633,49 @@ class RFC():
             print(e)
             return False
 
-    def find_rfc(self, rfcid):
-        try:
-            #self.driver.find_element_by_id('WIN_0_304276710').click()
-            print('focus in rfc id')
-            rfc_txt = self.get_rfc_number()
-            print('rfc: ',rfc_txt)
-            self.rfc_id = rfcid
-            #coloca RFC id
-            self.driver.find_element_by_id('arid_WIN_3_1000000182').clear()
-            self.set_txt('arid_WIN_3_1000000182', self.rfc_id)
-            #bton buscar
-            elm = self.driver.find_elements_by_link_text('Buscar')
-            print(len(elm))
-            #self.driver.find_element_by_id('WIN_3_1002').click()
-            elm[0].click()
-            # if not rfc_txt:
-            #     self.rfc_id = rfcid
-            #     #coloca RFC id
-            #     self.set_txt('arid_WIN_3_1000000182', self.rfc_id)
-            #     #bton buscar
-            #     elm = self.driver.find_elements_by_link_text('Buscar')
-            #     print(len(elm))
-            #     #self.driver.find_element_by_id('WIN_3_1002').click()
-            #     elm[0].click()
-            # else:
-            #     raise Exception('problema al buscar rfc. Rfc Txt no vacío')
-            time.sleep(self.delay)  
-            if self.print_error_txt():
-                return False
-            else:
-                return True
-            
-        except Exception as e:
-            print('error al buscar rfc', e)
+    def login_remedy(self):
+        #set the nav
+        
+        chrome_options = set_chrome_options(self.hide)
+        PATH="/Users/sariasc/Projects/python/chromedriver"
+        self.driver = webdriver.Remote("http://127.0.0.1:9515")
+        #self.driver = webdriver.Remote("http://127.0.0.1:4444/wd/hub", options=chrome_options)
+        self.language = self.driver.execute_script("return window.navigator.userLanguage || window.navigator.language")
+        
+        print('lang:', self.language)
+        #driver.set_window_size(1920, 1080)
+        #driver.manage().window().maximize()
+        self.driver.get(self.remedy_url)
+        #valida que se haya cargado la página.
+        #TODO: agregar flujo de error.
+
+        if valida_load_page(self.driver, self.delay) == False:
+            print("Error al cargar página de remedy")
             return False
+
+        #abrir sesión en Remedy
+        print('ingresando datos de login. user: ' + self.user)
+        user_element = self.driver.find_element_by_id('username-id').send_keys(self.user)
+        password_element = self.driver.find_element_by_id('pwd-id').send_keys(self.password)
+        #elem = driver.find_element_by_xpath(xp_login_submit)
+        self.driver.find_element_by_xpath(".//input[@name='login' and @type='button']").click()
+
+
+        #verifica si aparece un alert con la sesión tomada y si aparece más de una vez
+        if valida_alert(self.driver, self.delay, 'otra sesión') == False:
+            return False
+        
+        print('continua a validación de promt')
+        if valida_prompt(self.driver, self.delay) == False:
+            return False
+
+        print('validacion de error finalizada')
+        #verifica que el error de la sesión tomada, aparezca como promtext
+
+        print('Usuario con sesión, en página: ', self.driver.title)
+        return True
+
+    
         
 
 def valida_alert(driver, delay, message = 'default'):
@@ -679,46 +721,7 @@ def valida_load_page(driver, delay):
     return False
 
 
-def login_remedy(hide=False,user='',password='',remedy_url='',delay=0):
-    #set the nav
-    
-    chrome_options = set_chrome_options(hide)
-    #driver = webdriver.Chrome(executable_path=binary_path, options=chrome_options)
-    driver = webdriver.Remote("http://127.0.0.1:4444/wd/hub", options=chrome_options)
-    language = driver.execute_script("return window.navigator.userLanguage || window.navigator.language")
-    
-    print('lang:', language)
-    #driver.set_window_size(1920, 1080)
-    #driver.manage().window().maximize()
-    driver.get(remedy_url)
-    #valida que se haya cargado la página.
-    #TODO: agregar flujo de error.
 
-    if valida_load_page(driver, delay) == False:
-        print("Error al cargar página de remedy")
-        return False
-
-    #abrir sesión en Remedy
-    print('ingresando datos de login. user: ' + user)
-    user = driver.find_element_by_id('username-id').send_keys(user)
-    password = driver.find_element_by_id('pwd-id').send_keys(password)
-    #elem = driver.find_element_by_xpath(xp_login_submit)
-    driver.find_element_by_xpath(".//input[@name='login' and @type='button']").click()
-
-
-    #verifica si aparece un alert con la sesión tomada y si aparece más de una vez
-    if valida_alert(driver, delay, 'otra sesión') == False:
-        return False
-    
-    print('continua a validación de promt')
-    if valida_prompt(driver, delay) == False:
-        return False
-
-    print('validacion de error finalizada')
-    #verifica que el error de la sesión tomada, aparezca como promtext
-
-    print('Usuario con sesión, en página: ', driver.title)
-    return driver, language
 
 def validate_file(url_file):
         try:
