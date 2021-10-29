@@ -63,12 +63,15 @@ def main_without_save():
 
 def main_search():
     
-    #rfc_id = 'CRQ000000205164'
-    rfc_id = 'CRQ000000505164'
+    rfc_id = 'CRQ000000205483'
+    #rfc_id = 'CRQ000000505164'
     headless = False
     rfc = utils.RFC(headless, rfc = rfc_id)
     time.sleep(3)
-    rfc.search_rfc()
+    if rfc.search_rfc():
+        print("rfc encontrado")
+    else: 
+        print("rfc no encontrado")
     
     time.sleep(2)
     time.sleep(2)

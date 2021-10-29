@@ -17,12 +17,12 @@
                 "op_name":"EXEQUIEL A PINO IBARRA"
             },
             "servicio": 
-                {
-                    "id":"WIN_3_303497300",
-                    "op_id":86,
-                    "op_name":"MI BANCO",
-                    "service":"True"
-                },
+            {
+                "id":"WIN_3_303497300",
+                "op_id":86,
+                "op_name":"MI BANCO",
+                "service":"True"
+            },
             "motivo":
             {
                 "id":"WIN_3_1000000294",
