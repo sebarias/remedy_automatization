@@ -43,6 +43,15 @@ def main_uploadfile():
     time.sleep(2)
     rfc.close_page()
 
+def main_uploadfile_2():
+    rfc_id = 'CRQ000000205483'
+    #rfc_id = 'CRQ000000505164'
+    headless = False
+    rfc = utils.RFC(headless, rfc = rfc_id)
+    rfc.update_detalle_trabajo()
+    
+
+
 def main_without_save():
     headless = False
     rfc = utils.RFC(headless)
@@ -86,5 +95,6 @@ if __name__ == "__main__":
     print (sys.version_info)
     #main_uploadfile()
     #main_without_save()
-    main_search()
-    #main_2()
+    #main_search()
+    main_2()
+    #main_uploadfile_2()

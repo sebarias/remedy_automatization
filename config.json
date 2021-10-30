@@ -7,6 +7,7 @@
     "notas":"notas",
     "resumen":"resumen",
     "basic_filename":"basic_data.json",
+    "detalle_trabajo_filename": "detalle_trabajo.json",
 
     "basic" : 
         { 
@@ -42,6 +43,15 @@
                 "op_name":"4-Baja"  
             }
         },
+    "servicios":
+    {
+        "id": "WIN_3_303497300",
+        "mi_banco": 86,
+        "mi_pago": 87,
+        "mi_seguro": 88,
+        "mi_inversion": 89,
+        "mi_pass": 90
+    },
     "categorizacion": 
     {
         "cat_oper_niv_1":

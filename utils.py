@@ -88,6 +88,7 @@ class RFC():
         self.rfc_id = ''
         self.basic_filename = data['basic_filename']
         self.rfc_id = rfc
+        self.detalle_trabajo_filename = data['detalle_trabajo_filename']
         
     
     def open_menu(self):
@@ -163,14 +164,21 @@ class RFC():
                 try:
                     data_basic = data['data_basic']
                     date_data = data['date_data']
+                    #coord_cambio = data['coordinador_de_cambio']
+                    elecciones_basicas = data['elecciones_basicas']
                     self.complete_txt(data_basic)
+                    self.set_grupo_coordinador()
+                    #set opciones data 
+                    print('grupo coordinador elegido')
+                    self.choose_op(elecciones_basicas)
                     #set fecha deseada
                     #set fecha inicio
                     #set fecha fin
                     self.sel_fecha_sistema()
                     self.complete_txt(date_data)
+
                     time.sleep(2)
-                    self.save_rfc()
+                    #self.save_rfc()
                     time.sleep(4)
                     self.cerrar_sesion()
                     time.sleep(2)
@@ -214,6 +222,24 @@ class RFC():
         except Exception as e:
             print('error al buscar rfc', e)
             return False
+    def update_detalle_trabajo(self):
+        try:
+            if self.search_rfc():
+                data = load_data(self.detalle_trabajo_filename)
+                self.set_detalle_trabajo(data['detalle_trabajo'])
+                print('trabajo actualizado')
+                time.sleep(2)
+                self.cerrar_sesion()
+                print('sesion cerrada')
+                time.sleep(2)
+                self.close_page()
+                print('pagina cerrada')
+                return True
+        except Exception as e:
+            print('error al actualizar el detalle de trabajo rfc', e)
+            return False
+
+        return True
 
     def is_headlessmode(self):
         return self.driver.execute_script("return navigator.plugins.length == 0")
@@ -544,8 +570,8 @@ class RFC():
             print('error al seleccionar tipo trabajo')
             print(e)
 
-    def set_detalle_trabajo(self):
-        trabajos = self.detalle_trabajo
+    def set_detalle_trabajo(self,detalle_trabajo):
+        trabajos = detalle_trabajo
         for trabajo in trabajos:
             up_file = False
             url = None
@@ -622,12 +648,14 @@ class RFC():
             if up_file:
                 if validate_file(url_file):
                     self.upload_file(url_file)
-                    time.sleep(self.delay)
+                    
                 else:
                     print('file upload problem')
             #btn agregar
+            time.sleep(self.delay)
             self.driver.find_element_by_id('WIN_3_304247110').click()
             print('add detalle trabajo ok')
+            return True
         except Exception as e:
             print('error al agregar detalle trabajo')
             print(e)
