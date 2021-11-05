@@ -52,9 +52,6 @@ dic_date_end['arid_WIN_3_1000000362'] = None
 dic_date_end['arid_WIN_3_1000000364'] = None
 dic_date_end['arid_WIN_3_1000000363'] = None
 
-
-
-
 dic_tab = {}
 dic_tab['categorizacion'] = 2
 dic_tab['fecha_sistema'] = 5
@@ -89,6 +86,7 @@ class RFC():
         self.basic_filename = data['basic_filename']
         self.rfc_id = rfc
         self.detalle_trabajo_filename = data['detalle_trabajo_filename']
+        self.categorizacion_filename = data['categorizacion_filename']
         
     
     def open_menu(self):
@@ -152,11 +150,11 @@ class RFC():
             
         return None
 
-    def create_new_basic_rfc(self):
+    def create_new_basic_rfc(self, servicio="MIBANCO"):
         print('entrando a crear nuevo rfc')
         self.login_remedy() 
         if self.create_new_rfc() is not None:
-            time.sleep(1)
+            time.sleep(4)
             self.set_rfc_id()
             data = load_data(self.basic_filename)
             #set resumen
@@ -164,33 +162,25 @@ class RFC():
                 try:
                     data_basic = data['data_basic']
                     date_data = data['date_data']
-                    #coord_cambio = data['coordinador_de_cambio']
                     elecciones_basicas = data['elecciones_basicas']
                     self.complete_txt(data_basic)
                     self.set_grupo_coordinador()
-                    #set opciones data 
-                    print('grupo coordinador elegido')
+                    servicio_dic = data['servicios'][servicio]
+                    elecciones_basicas['servicio'] = servicio_dic
                     self.choose_op(elecciones_basicas)
-                    #set fecha deseada
-                    #set fecha inicio
-                    #set fecha fin
                     self.sel_fecha_sistema()
                     self.complete_txt(date_data)
-
-                    time.sleep(2)
-                    #self.save_rfc()
-                    time.sleep(4)
-                    self.cerrar_sesion()
-                    time.sleep(2)
-                    self.close_page()
+                    self.save_rfc()
                     return True
                 except Exception as e:
                     print(e)
-                    print('error: cerraremos sesión y pagina')
-                    self.cerrar_sesion()
-                    time.sleep(self.delay)
-                    self.close_page()
-        return False
+                    print('error: al crear nuevo RFC')
+                    return False
+                finally:
+                    self.close_sesion()
+                    print('goodbye')
+        else:
+            return False
 
     def search_rfc(self):
         try:
@@ -228,18 +218,47 @@ class RFC():
                 data = load_data(self.detalle_trabajo_filename)
                 self.set_detalle_trabajo(data['detalle_trabajo'])
                 print('trabajo actualizado')
-                time.sleep(2)
-                self.cerrar_sesion()
-                print('sesion cerrada')
-                time.sleep(2)
-                self.close_page()
-                print('pagina cerrada')
                 return True
         except Exception as e:
             print('error al actualizar el detalle de trabajo rfc', e)
             return False
 
+        finally:
+            self.close_sesion()
+            print('goodbye!')
+
         return True
+
+    def update_categorizacion(self):
+        try:
+            if self.search_rfc():
+                data = load_data(self.categorizacion_filename)
+                categorizacion = data['categorizacion']
+                self.sel_categorizacion()
+                self.choose_op(categorizacion)
+                print('data de categorización ingresada')
+                self.save_rfc(new=False)
+                return True
+            else:
+                raise Exception('No se encontró RFC')
+        except Exception as e:
+            print('error al actualizar categorizacion', e)
+            return False
+        finally:
+            self.close_sesion()
+            print('goodbye!')
+
+    def close_sesion(self, save=False):
+        if save:
+            time.sleep(2)
+            self.save_rfc()
+        time.sleep(2)
+        self.cerrar_sesion()
+        print('sesion cerrada')
+        time.sleep(2)
+        self.close_page()
+        print('pagina cerrada')
+
 
     def is_headlessmode(self):
         return self.driver.execute_script("return navigator.plugins.length == 0")
@@ -276,58 +295,6 @@ class RFC():
     def get_rfc_number(self):
         rfc = self.driver.find_element_by_id('arid_WIN_3_1000000182').get_attribute('value')
         return(rfc)
-        
-    def calendar_action_beta(self):
-        btn = self.driver.find_element_by_id('WIN_3_303924000')
-        btn = btn.find_element_by_tag_name('a')
-        btn.click()
-        time.sleep(self.delay)
-        cal = self.driver.find_element_by_id('popup303924000_3')
-        days = cal.find_elements_by_class_name('weekday')
-        print('days:', len(days))
-        days[15].click()
-        time.sleep(self.delay)
-        self.driver.find_elements_by_tag_name('button')[0].click()
-        time.sleep(self.delay)
-        cal_txt = self.driver.find_element_by_id('arid_WIN_3_303924000').get_attribute('value')
-        print(cal_txt)
-      
-    def setting_data_mobile(self):
-        try:
-            self.set_grupo_coordinador()
-            #set opciones data 
-            print('grupo coordinador elegido')
-            operator = self.data_basic.pop('coordinador_de_cambio')
-            print(operator)
-            print(self.data_basic)
-            self.get_data_combo(operator)
-            self.choose_op(self.data_basic)
-            print('opciones básicas elegidas')
-            #set txt
-            self.complete_txt(dic_txt)
-            print('data descriptiva de RFC ingresada')
-            #seleccionar y completar tab de fechas
-            self.sel_fecha_sistema()
-            self.complete_txt(dic_date_init)
-            self.complete_txt(dic_date_end)
-            print('fechas de tab fechas ingresadas')
-            #seleccionar y completar tab de categorizacion
-            self.sel_categorizacion()
-            self.choose_op(self.data_categ)
-            print('data de categorización ingresada')
-            #seleccionar y completar popup de riesgos.
-            #self.set_riesgo_values()
-            #add detalle de trabajo
-            self.sel_detalle()
-            self.set_detalle_trabajo()
-            #se elimino resto codigo para probar funcion que trae los coordinadores.
-            
-        except Exception as e:
-            print(e)
-            print('error: cerraremos sesión y pagina')
-            self.cerrar_sesion()
-            time.sleep(self.delay)
-            self.close_page()
         
     def get_last_menu_outer_div(self):
         div = self.driver.find_elements_by_class_name('MenuOuter')[-1]
@@ -410,7 +377,7 @@ class RFC():
             op = op.click()
             time.sleep(self.delay)
             if is_service:
-                self.scroll_down(60)
+                self.scroll_down(150)
             #print('opciones: ', len(self.driver.find_elements_by_class_name('MenuOuter')))
             #print(self.driver.find_elements_by_class_name('MenuOuter').get_attribute('outerHTML'))
             time.sleep(self.delay)
@@ -458,79 +425,23 @@ class RFC():
     def sel_detalle(self):
         self.select_tab(dic_tab['detalle'])
 
-    def save_rfc(self):
-        save_id = 'WIN_3_1001'
-        btn_ = self.driver.find_element_by_id(save_id)
-        btn_.click()
+    def save_rfc(self, new=True):
+        try:
+            if new:
+                save_id = 'WIN_3_1001'
+            else:
+                save_id = 'WIN_3_1003'
+            btn_ = self.driver.find_element_by_id(save_id)
+            #btn_ = self.driver.find_element_by_class_name('searchsavechanges')
+            btn_.click()
+        except Exception as e:
+            print('error al guardar rfc: ', e)
         
-        time.sleep(self.delay * 3)
+        time.sleep(self.delay)
         if self.print_error_txt():
             return False
         return True
 
-    def buscarfc_beta(self):
-        
-        self.select_search_rfc()
-        time.sleep(self.delay)
-        time.sleep(self.delay)
-        self.find_rfc(self.rfc_id)
-        return self.find_rfc(self.rfc_id)
-            
-    def valida_save_rfc(self):
-        nu_rfc = self.get_rfc_number()
-        if nu_rfc == self.rfc_id:
-            print(nu_rfc, self.rfc_id,' : error al guardar RFC.')
-            return False
-        else:
-            print(nu_rfc, self.rfc_id, ' :: RFC Guardado OK')
-            return True
-
-    def save_riesgo(self):
-        save_id = 'WIN_0_300994900'
-        self.driver.find_element_by_id(save_id).click()
-
-    def set_riesgo_values(self):
-        print('here')
-        #self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        original_wind=self.driver.current_window_handle
-        assert len(self.driver.window_handles) == 1
-        #WIN_3_303900300
-        #reg_img_301346600
-        #WIN_3_301346600
-        btn = self.driver.\
-           find_element_by_id('WIN_3_301346600')
-        print(btn.get_attribute('value'))
-        print(btn.get_attribute('outerHTML'))
-        #btn.send_keys(Keys.CONTROL + 't')
-        btn.click()
-        #self.driver.execute_script("document.getElementById('WIN_3_301346600').click()")
-        time.sleep(self.delay)
-        
-        all_handles=self.driver.window_handles
-        print(len(all_handles))
-        print(all_handles)
-        for handle in all_handles:
-            if handle !=original_wind:
-                print(handle)
-                window_after = self.driver.switch_to.window(handle)
-                print(window_after.title)
-                self.driver.switch_to.window(window_after)
-                self.choose_op(self.data_riesgo)
-                self.save_riesgo()
-                self.driver.switch_to.window(original_wind)
-                
-
-        # original_wind = self.driver.current_window_handle
-        # assert len(self.driver.window_handles) == 1
-        # self.driver.\
-        #     find_element_by_id('WIN_3_301346600').click()
-        # time.sleep(self.delay)
-        # print(len(self.driver.window_handles))
-        # window_after = self.driver.window_handles[1]
-        # self.driver.switch_to.window(window_after)
-        # self.choose_op(self.data_riesgo)
-        # self.save_riesgo()
-        # self.driver.switch_to.window(original_wind)
 
     def print_error_txt(self):
         div_err = self.driver.find_element_by_id('PromptBar')
@@ -560,10 +471,6 @@ class RFC():
         try:
             self.driver.find_element_by_id('WIN_4_304247210')\
                 .find_element_by_tag_name('a').click()
-                # /html/body/div[3]/div[2]/table/tbody/tr[14]/td[1]
-                # /html/body/div[3]/div[2]/table/tbody/tr[14]/td[1]
-                # /html/body/div[3]/div[2]/table/tbody/tr[14]/td[1]
-                # /html/body/div[4]/div[2]/table/tbody/tr[14]/td[1]
             txt = self.get_txt('arid_WIN_4_304247210')
             print(txt)
         except Exception as e:
@@ -595,14 +502,26 @@ class RFC():
         iframe = self.driver.find_elements_by_tag_name('iframe')
         if len(iframe) > 1:
             print('se detecta alert', len(iframe), iframe)
-            self.driver.switch_to.frame(iframe[1])
-            #presionar aceptar
-            self.driver.\
-                find_element_by_id('PopupMsgFooter').\
-                find_elements_by_class_name('PopupBtn')[0].click()
-            #switch al contentedor
-            self.driver.switch_to.default_content()
-            time.sleep(self.delay)
+            for i in iframe:
+                print('switch a iframe:', i)
+                self.driver.switch_to.frame(i)
+                print('en iframe')
+                #buscar div
+                try:
+                    popup = self.driver.\
+                    find_element_by_id('PopupMsgFooter')
+                except:
+                    popup = None
+                print('popup', popup)
+                if popup is not None:
+                    #click en popup
+                    popup.\
+                    find_elements_by_class_name('PopupBtn')[0].click()
+                #switch al contentedor
+                print('switch to default')
+                self.driver.switch_to.default_content()
+                time.sleep(self.delay)
+            
         else:
             print('no se encontró alert.')
 
@@ -671,11 +590,8 @@ class RFC():
         self.language = self.driver.execute_script("return window.navigator.userLanguage || window.navigator.language")
         
         print('lang:', self.language)
-        #driver.set_window_size(1920, 1080)
-        #driver.manage().window().maximize()
         self.driver.get(self.remedy_url)
         #valida que se haya cargado la página.
-        #TODO: agregar flujo de error.
 
         if valida_load_page(self.driver, self.delay) == False:
             print("Error al cargar página de remedy")
@@ -747,9 +663,6 @@ def valida_load_page(driver, delay):
         print("Loading took too much time!")
         
     return False
-
-
-
 
 def validate_file(url_file):
         try:

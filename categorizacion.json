@@ -1,0 +1,47 @@
+{
+    "categorizacion": 
+    {
+        "cat_oper_niv_1":
+        {
+            "id":"WIN_3_1000000063",
+            "op_id":15,
+            "op_name":"Aplicaciones de Negocio"
+        },
+        "cat_oper_niv_2":
+        {
+            "id":"WIN_3_1000000064",
+            "op_id":6,
+            "op_name":"Innovacion"
+        },
+        "cat_oper_niv_3":
+        {
+            "id":"WIN_3_1000000065",
+            "op_id":2,
+            "op_name":"Mantencion"
+        },
+        "cat_prod_niv_1":
+        {
+            "id":"WIN_3_1000001270",
+            "op_id":12,
+            "op_name":"Portales Internet"
+        },
+        "cat_prod_niv_2":
+        {
+            "id":"WIN_3_1000001271",
+            "op_id":3,
+            "op_name":"Produccion Aplicaciones"
+        },
+        "cat_prod_niv_3":
+        {
+            "id":"WIN_3_1000001272",
+            "op_id":1,
+            "op_name":"Sistemas Oficina"
+        },
+        "nom_prod":
+        {
+            "id":"WIN_3_1000002268",
+            "op_id":2,
+            "op_name":"Produccion Aplicaciones"
+        }
+    }
+}
