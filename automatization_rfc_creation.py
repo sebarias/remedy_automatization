@@ -44,14 +44,14 @@ def main_uploadfile():
     rfc.close_page()
 
 def main_update_categorizacion():
-    rfc_id = 'CRQ000000205483'
+    rfc_id = 'CRQ000000205940'
     #rfc_id = 'CRQ000000505164'
     headless = False
     rfc = utils.RFC(headless, rfc = rfc_id)
     rfc.update_categorizacion()
 
 def main_uploadfile_2():
-    rfc_id = 'CRQ000000205483'
+    rfc_id = 'CRQ000000206371'
     #rfc_id = 'CRQ000000505164'
     headless = False
     rfc = utils.RFC(headless, rfc = rfc_id)
@@ -80,7 +80,7 @@ def main_without_save():
 def main_search():
     
     #rfc_id = 'CRQ000000205483'
-    rfc_id = 'CRQ000000505164'
+    rfc_id = 'CRQ000000205940'
     headless = False
     rfc = utils.RFC(headless, rfc = rfc_id)
     time.sleep(3)
@@ -104,5 +104,5 @@ if __name__ == "__main__":
     #main_without_save()
     #main_search()
     #main_2()
-    #main_uploadfile_2()
-    main_update_categorizacion()
+    main_uploadfile_2()
+    #main_update_categorizacion()

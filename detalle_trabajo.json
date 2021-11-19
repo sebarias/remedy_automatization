@@ -5,30 +5,10 @@
             "trabajo":1,
             "trabajo_data":
             {
-                "trabajo_nombre":"ok_riesgo",
-                "trabajo_notas":"ok riesgo",
-                "file":true,
-                "url_file":"/Users/sariasc/Projects/python/reporte_aprobaciones.pdf"
-            }
-        },
-        {
-            "trabajo":2,
-            "trabajo_data":
-            {
-                "trabajo_nombre":"ok_produccion",
-                "trabajo_notas":"ok produccion",
-                "file":true,
-                "url_file":"/Users/sariasc/GonzaloBarra.png"
-            }
-        },
-        {
-            "trabajo":3,
-            "trabajo_data":
-            {
                 "trabajo_nombre":"plan instalacion",
                 "trabajo_notas":"plan instalacion",
-                "file":false,
-                "url_file":"/usr/lib/python3/dist-packages/dbus_python-1.2.16.egg-info",
+                "file":true,
+                "url_file":"/usr2/lib/python3/dist-packages/dbus_python-1.2.16.egg-info",
                 "detalle_tipo":"Plan Instalación"
             }
         }
