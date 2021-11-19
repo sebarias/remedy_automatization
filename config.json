@@ -1,0 +1,13 @@
+{
+    "id":"",
+    "user":"XXX",
+    "pass":"XXX",
+    "remedy_url":"XXXX",
+    "delay":2,
+    "notas":"notas",
+    "resumen":"resumen",
+    "basic_filename":"basic_data.json",
+    "detalle_trabajo_filename": "detalle_trabajo.json",
+    "categorizacion_filename": "categorizacion.json"
+
+}
