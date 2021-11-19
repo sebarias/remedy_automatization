@@ -74,5 +74,26 @@
             "op_name":"MI INVERSION",
             "service":"True"
         }
-    }    
+    },    
+    "riesgo":
+    {
+        "servicio_critico":
+        {
+            "id":"WIN_0_300996200",
+            "op_id":2,
+            "op_name":"no"
+        },
+        "afecta_clientes":
+        {
+            "id":"WIN_0_301019100",
+            "op_id":1,
+            "op_name":"si"
+        },
+        "afecta_usuarios":
+        {
+            "id":"WIN_0_301029000",
+            "op_id":2,
+            "op_name":"no"
+        }
+    }
 }

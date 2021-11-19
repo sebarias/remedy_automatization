@@ -162,14 +162,17 @@ class RFC():
                 try:
                     data_basic = data['data_basic']
                     date_data = data['date_data']
+                    riesgo_data = data['riesgo']
                     elecciones_basicas = data['elecciones_basicas']
                     self.complete_txt(data_basic)
                     self.set_grupo_coordinador()
                     servicio_dic = data['servicios'][servicio]
                     elecciones_basicas['servicio'] = servicio_dic
                     self.choose_op(elecciones_basicas)
+                    self.set_riesgo_values(riesgo_data)
                     self.sel_fecha_sistema()
                     self.complete_txt(date_data)
+                    
                     self.save_rfc()
                     return True
                 except Exception as e:
@@ -263,6 +266,35 @@ class RFC():
     def is_headlessmode(self):
         return self.driver.execute_script("return navigator.plugins.length == 0")
 
+    def save_riesgo(self):
+        save_id = 'WIN_0_300994900'
+        self.driver.find_element_by_id(save_id).click()
+
+    def set_riesgo_values(self, data_riego):
+        print('setting riesgo values')
+        original_wind=self.driver.current_window_handle
+        parent_han  = self.driver.window_handles[0]
+        assert len(self.driver.window_handles) == 1
+        btn = self.driver.\
+           find_element_by_id('WIN_3_301346600')
+        btn.click()
+        
+        WebDriverWait(self.driver, 5).until(EC.number_of_windows_to_be(2))
+        all_handles=self.driver.window_handles
+        print(len(all_handles))
+        print(all_handles)
+        new_han = [x for x in all_handles if x != parent_han][0]
+        print(new_han)
+        print(parent_han)
+        self.driver.switch_to.window(new_han)
+        
+        WebDriverWait(self.driver, 5).until(EC.title_contains("Pregunta de riesgo de cambios"))
+        print(self.driver.current_window_handle)
+        self.choose_op(data_riego)
+        self.save_riesgo()
+        self.driver.switch_to.window(parent_han)
+ 
+    
     def set_dic_date(self):
         date_ini = self.get_date_start()
         date_end = self.get_date_end()

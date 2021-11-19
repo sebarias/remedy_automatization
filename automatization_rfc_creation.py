@@ -103,6 +103,6 @@ if __name__ == "__main__":
     #main_uploadfile()
     #main_without_save()
     #main_search()
-    #main_2()
-    main_uploadfile_2()
+    main_2()
+    #main_uploadfile_2()
     #main_update_categorizacion()
